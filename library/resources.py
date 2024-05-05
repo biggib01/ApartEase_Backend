@@ -123,30 +123,11 @@ def create_resident(current_user):
     if room_check:
         return make_response(jsonify({"message": "There's other resident in this room already!"}), 409)
     else:
-        resident = Resident.query.filter_by(name=data['name']).first()
-        if resident:
-            return make_response(jsonify({"message": "Resident with same name already exists!"}), 409)
-        else:
-            new_resident = Resident(name=data['name'], lineId=data['lineId'], roomNumber=data['roomNumber'])
-            db.session.add(new_resident)
-            db.session.commit()
+        new_resident = Resident(name=data['name'], lineId=data['lineId'], roomNumber=data['roomNumber'])
+        db.session.add(new_resident)
+        db.session.commit()
 
-            return jsonify({'message': 'new residents data created'})
-
-#  add a electric unit data
-@app.route('/unit/add', methods=['POST'])
-@token_required
-def create_unit(current_user):
-    '''adds a new book to collection!'''
-    data = request.get_json()
-
-    new_unit = Unit(numberOfUnits=data['numberOfUnits'],
-                    date=date.datetime.now(),
-                    extractionStatus=data['extractionStatus'],
-                    res_room=data['roomNumber'])
-    db.session.add(new_unit)
-    db.session.commit()
-    return jsonify({'message' : 'new unit data created'})
+        return jsonify({'message': 'new residents data created'})
 
 # get all residents
 @app.route('/resident/list', methods=['GET'])
@@ -174,3 +155,74 @@ def get_residents(current_user):
         output.append(resident_data)
 
     return jsonify({'Resident': output})
+
+# get a resident
+@app.route('/resident/list/<res_id>', methods=['GET'])
+@token_required
+def get_resident(current_user, res_id):
+    resident = Resident.query.filter_by(id=res_id).first()
+
+    if not resident:
+        return jsonify({'message': 'The resident does not exist'})
+
+    resident_data = {}
+    resident_data['id'] = resident.id
+    resident_data['name'] = resident.name
+    resident_data['lineId'] = resident.lineId
+    resident_data['roomNumber'] = resident.roomNumber
+
+    unit_output = []
+    for unit in resident.unit:
+        unit_data = {}
+        unit_data['id'] = unit.id
+        unit_data['numberOfUnits'] = unit.numberOfUnits
+        unit_data['extractionStatus'] = unit.extractionStatus
+
+        unit_output.append(unit_data)
+
+    resident_data['unitList'] = unit_output
+
+
+    return jsonify({'Resident': resident_data})
+
+
+# deleting a resident
+@app.route('/resident/del/<res_id>', methods=['DELETE'])
+@token_required
+def delete_resident(current_user, res_id):
+    resident = Resident.query.filter_by(id=res_id).first()
+    if not resident:
+        return jsonify({'message': 'The resident does not exist'})
+
+    db.session.delete(resident)
+    db.session.commit()
+    return jsonify({'message': 'resident deleted'})
+
+# update resident by id
+@app.route('/resident/edit/<res_id>', methods=['POST'])
+@token_required
+def update_resident(current_user, res_id):
+
+    change_data = request.get_json()
+    change_name = change_data['name']
+    change_lineId = change_data['lineId']
+    change_roomNumber = change_data['roomNumber']
+
+    resident = Resident.query.filter_by(id=res_id).first()
+
+    if resident:
+        check_room = Resident.query.filter_by(roomNumber=change_roomNumber).first()
+
+        if check_room and check_room.roomNumber != resident.roomNumber:
+            return make_response(jsonify({"message": "There's other resident in this room already!"}), 409)
+        else:
+            resident.name = change_name
+            resident.lineId = change_lineId
+            resident.roomNumber = change_roomNumber
+
+            db.session.commit()
+
+            return jsonify({'message': 'Resident data has been update'}), 201
+    else:
+        return make_response(jsonify({"message": "There's no resident exists!"}), 409)
+

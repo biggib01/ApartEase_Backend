@@ -13,7 +13,6 @@ class User(db.Model):
     username = db.Column(db.String(64), index=True, unique=True)
     password = db.Column(db.String(128))
     admin = db.Column(db.Boolean)
-    books = db.relationship('BookModel', backref='owner', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.username)
@@ -40,9 +39,9 @@ def token_required(f):
 # resident table
 class Resident(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, unique=True, nullable=False)
+    name = db.Column(db.String, nullable=False)
     lineId = db.Column(db.String)
-    roomNumber = db.Column(db.String, nullable=False)
+    roomNumber = db.Column(db.String, nullable=False, unique=True)
     unit = db.relationship('Unit', backref='resident')
 
     def __repr__(self):
