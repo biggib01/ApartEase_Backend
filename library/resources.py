@@ -226,3 +226,184 @@ def update_resident(current_user, res_id):
     else:
         return make_response(jsonify({"message": "There's no resident exists!"}), 409)
 
+#--------------------------------------------------#
+
+#  add a unit, [http://localhost/unit/add]
+@app.route('/unit/add', methods=['POST'])
+@token_required
+def create_unit(current_user):
+    data = request.get_json()
+
+    new_unitRecord = Unit(numberOfUnits=data['numberOfUnits'],
+                     date=date.datetime.now(),
+                     extractionStatus=data['extractionStatus'],
+                     approveStatus=False,
+                     res_room=data['res_room'])
+    db.session.add(new_unitRecord)
+    db.session.commit()
+
+    return jsonify({'message' : 'new record created'})
+
+# get record list by id [http://localhost/unit/list/x]
+@app.route('/unit/list/<unit_id>', methods=['GET'])
+@token_required
+def get_unit(current_user, unit_id):
+    unit_record = Unit.query.filter_by(id=unit_id).first()
+
+    if not unit_record:
+        return jsonify({'message': 'The record does not exist'})
+
+    record_data = {}
+    record_data['id'] = unit_record.id
+    record_data['numberOfUnits'] = unit_record.numberOfUnits
+    record_data['date'] = unit_record.date
+    record_data['extractionStatus'] = unit_record.extractionStatus
+    record_data['approveStatus'] = unit_record.approveStatus
+    record_data['res_room'] = unit_record.res_room
+
+    return jsonify({'Unit': record_data})
+
+def toDate(dateString):
+    return date.datetime.strptime(dateString, "%Y-%m-%d").date()
+
+# get record list by date(month) [http://localhost/unit/list/date?page=x&start=%Y-%m-%d&end=%Y-%m-%d]
+@app.route('/unit/list/date', methods=['GET'])
+@token_required
+def get_unit_by_date(current_user):
+    startDate = request.args.get('start', type=toDate)
+    endDate = request.args.get('end', type=toDate)
+    # pagination
+    page = request.args.get('page', type=int)
+
+    per_page = 5
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    unit_record = Unit.query.filter(and_(Unit.date <= endDate, Unit.date >= startDate)).all()
+
+    total_pages = (len(unit_record) + per_page - 1) // per_page
+    item_on_page = unit_record[start:end]
+
+    output = []
+    for record in item_on_page:
+        record_data = {}
+        record_data['id'] = record.id
+        record_data['numberOfUnits'] = record.numberOfUnits
+        record_data['date'] = record.date
+        record_data['extractionStatus'] = record.extractionStatus
+        record_data['approveStatus'] = record.approveStatus
+        record_data['res_room'] = record.res_room
+        output.append(record_data)
+
+    page_data = {}
+    page_data['total_pages'] = total_pages
+    page_data['page'] = page
+    output.append(page_data)
+    return jsonify({'Unit': output})
+
+# get record list by room number [http://localhost/unit/list/room?page=x&query=x]
+@app.route('/unit/list/room', methods=['GET'])
+@token_required
+def get_unit_by_room(current_user):
+    query = request.args.get('query', type=str)
+    # pagination
+    page = request.args.get('page', type=int)
+
+    per_page = 5
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    unit_record = Unit.query.filter(Unit.res_room.like(query)).all()
+
+    total_pages = (len(unit_record) + per_page - 1) // per_page
+    item_on_page = unit_record[start:end]
+
+    output = []
+    for record in item_on_page:
+        record_data = {}
+        record_data['id'] = record.id
+        record_data['numberOfUnits'] = record.numberOfUnits
+        record_data['date'] = record.date
+        record_data['extractionStatus'] = record.extractionStatus
+        record_data['approveStatus'] = record.approveStatus
+        record_data['res_room'] = record.res_room
+        output.append(record_data)
+
+    page_data = {}
+    page_data['total_pages'] = total_pages
+    page_data['page'] = page
+    output.append(page_data)
+    return jsonify({'Unit': output})
+
+# get all records with pagination [http://localhost/unit/list]
+@app.route('/unit/list', methods=['GET'])
+@token_required
+def get_units(current_user):
+    # pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    unit_record = Unit.query.all()
+
+    total_pages = (len(unit_record) + per_page - 1) // per_page
+    item_on_page = unit_record[start:end]
+
+    output = []
+    for record in item_on_page:
+        record_data = {}
+        record_data['id'] = record.id
+        record_data['numberOfUnits'] = record.numberOfUnits
+        record_data['date'] = record.date
+        record_data['extractionStatus'] = record.extractionStatus
+        record_data['approveStatus'] = record.approveStatus
+        record_data['res_room'] = record.res_room
+        output.append(record_data)
+
+    page_data = {}
+    page_data['total_pages'] = total_pages
+    page_data['page'] = page
+    output.append(page_data)
+    return jsonify({'Unit': output})
+
+# deleting a record [http://localhost/unit/del/x]
+@app.route('/unit/del/<rec_id>', methods=['DELETE'])
+@token_required
+def delete_unit(current_user, rec_id):
+    unit_record = Unit.query.filter_by(id=rec_id).first()
+    if not unit_record:
+        return jsonify({'message': 'record does not exist'})
+
+    db.session.delete(unit_record)
+    db.session.commit()
+    return jsonify({'message': 'Record deleted'})
+
+# update record [http://localhost/unit/edit/x]
+@app.route('/unit/edit/<rec_id>', methods=['POST'])
+@token_required
+def update_unit(current_user, rec_id):
+
+    date_format = '%Y-%m-%d'
+
+    change_data = request.get_json()
+    change_numberOfUnits = change_data['numberOfUnits']
+    change_date = date.datetime.strptime(change_data['date'], date_format)
+    change_extractionStatus = change_data['extractionStatus']
+    change_approveStatus = change_data['approveStatus']
+    change_room = change_data['res_room']
+
+    unit_record = Unit.query.filter_by(id=rec_id).first()
+
+    if unit_record:
+        unit_record.numberOfUnits = change_numberOfUnits
+        unit_record.date = change_date
+        unit_record.extractionStatus = change_extractionStatus
+        unit_record.approveStatus = change_approveStatus
+        unit_record.res_room = change_room
+
+        db.session.commit()
+
+        return jsonify({'message': 'Record data has been update'}), 201
+    else:
+        return make_response(jsonify({"message": "There's no record exists!"}), 409)

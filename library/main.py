@@ -1,7 +1,7 @@
 import os
 from flask import Flask
 from config import Config
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, BaseQuery
 from flask_migrate import Migrate
 from flask_cors import CORS
 from config import app_config

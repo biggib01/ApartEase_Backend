@@ -53,6 +53,7 @@ class Unit(db.Model):
     numberOfUnits = db.Column(db.Integer)
     date = db.Column(db.Date)
     extractionStatus = db.Column(db.String)
+    approveStatus = db.Column(db.Boolean)
     res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
 
     def __repr__(self):
