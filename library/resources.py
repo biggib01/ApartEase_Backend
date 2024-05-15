@@ -41,7 +41,9 @@ def login():
 
     if check_password_hash(user.password, auth.get('password')):
         token = jwt.encode({'public_id': user.public_id}, app.config['SECRET_KEY'], 'HS256')
-        return make_response(jsonify({'token': token}), 201)
+        
+        user_data = {'username': user.username, 'has_admin_role': user.admin, 'token': token}
+        return make_response(jsonify({'User': user_data}), 201)
 
     return make_response('Could not verify password!', 403, {'WWW-Authenticate': 'Basic-realm= "Wrong Password!"'})
 
