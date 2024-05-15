@@ -16,6 +16,6 @@
 ## Running the application
 
 > type: `python run.py`
-> serving on: `https://127.0.0.1:5000/`
+> serving on: `https://127.0.0.1:1234/`
 
 ## Credit of code template https://github.com/CIRCLECI-GWP/authentication-decorators-in-flask.git
