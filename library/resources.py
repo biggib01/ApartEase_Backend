@@ -377,7 +377,16 @@ def get_resident(current_user, role, res_id):
 def get_resident_by_roomNumber(current_user, role):
     query = request.args.get('query', type=str)
 
+    # pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    start = (page - 1) * per_page
+    end = start + per_page
+
     resident = Resident.query.filter_by(roomNumber=query).all()
+
+    total_pages = (len(resident) + per_page - 1) // per_page
+    item_on_page = resident[start:end]
 
     output = []
 
@@ -385,7 +394,7 @@ def get_resident_by_roomNumber(current_user, role):
         return make_response(jsonify({"message": "The resident with the room number does not exist"}), 404)
 
     else:
-        for resident in resident:
+        for resident in item_on_page:
             resident_data = {}
             resident_data['id'] = resident.id
             resident_data['name'] = resident.name
@@ -394,6 +403,10 @@ def get_resident_by_roomNumber(current_user, role):
 
             output.append(resident_data)
 
+    page_data = {}
+    page_data['total_pages'] = total_pages
+    page_data['page'] = page
+    output.append(page_data)
     return jsonify({'Resident': output})
 
 
