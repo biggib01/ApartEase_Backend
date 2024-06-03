@@ -13,6 +13,21 @@ import difflib
 from sqlalchemy.sql import func
 
 
+def toDate(dateString):
+    return date.datetime.strptime(dateString, "%Y-%m-%d").date()
+
+def pagination(page, list, per_page):
+
+    per_page = per_page
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    total_pages = (len(list) + per_page - 1) // per_page
+    item_on_page = list[start:end]
+
+    return total_pages, item_on_page
+
+
 # --------------------Authentication------------------------------#
 
 # user login route [http://localhost/login]
@@ -327,14 +342,10 @@ def create_resident(current_user, role):
 def get_residents(current_user, role):
     # pagination
     page = request.args.get('page', 1, type=int)
-    per_page = 5
-    start = (page - 1) * per_page
-    end = start + per_page
 
-    residents = Resident.query.order_by(Resident.id).all()
+    resident = Resident.query.order_by(Resident.id).all()
 
-    total_pages = (len(residents) + per_page - 1) // per_page
-    item_on_page = residents[start:end]
+    total_pages, item_on_page = pagination(page, resident, 5)
 
     output = []
     for resident in item_on_page:
@@ -375,18 +386,13 @@ def get_resident(current_user, role, res_id):
 @app.route('/resident/list/room', methods=['GET'])
 @token_required
 def get_resident_by_roomNumber(current_user, role):
-    query = request.args.get('query', type=str)
 
-    # pagination
+    query = request.args.get('query', type=str)
     page = request.args.get('page', 1, type=int)
-    per_page = 5
-    start = (page - 1) * per_page
-    end = start + per_page
 
     resident = Resident.query.filter_by(roomNumber=query).all()
 
-    total_pages = (len(resident) + per_page - 1) // per_page
-    item_on_page = resident[start:end]
+    total_pages, item_on_page = pagination(page, resident, 5)
 
     output = []
 
@@ -418,9 +424,6 @@ def get_resident_by_name(current_user, role):
 
     # pagination
     page = request.args.get('page', 1, type=int)
-    per_page = 5
-    start = (page - 1) * per_page
-    end = start + per_page
 
     if not query:
         return jsonify([])
@@ -432,10 +435,9 @@ def get_resident_by_name(current_user, role):
     SELECT * FROM Resident
     WHERE search_vector @@ to_tsquery(:search_term);
     """
-    search_results = db.session.execute(text(search_query), {'search_term': query}).fetchall()
+    resident = db.session.execute(text(search_query), {'search_term': query}).fetchall()
 
-    total_pages = (len(search_results) + per_page - 1) // per_page
-    item_on_page = search_results[start:end]
+    total_pages, item_on_page = pagination(page, resident, 5)
 
     output = []
 
@@ -542,10 +544,6 @@ def get_unit(current_user, role, unit_id):
     return jsonify({'Unit': record_data})
 
 
-def toDate(dateString):
-    return date.datetime.strptime(dateString, "%Y-%m-%d").date()
-
-
 # get record list by date [http://localhost/unit/list/date?page=x&start=%Y-%m-%d&end=%Y-%m-%d]
 @app.route('/unit/list/date', methods=['GET'])
 @token_required
@@ -554,19 +552,14 @@ def get_unit_by_date(current_user, role):
     endDate = request.args.get('end', type=toDate)
 
     # pagination
-    page = request.args.get('page', type=int)
-
-    per_page = 5
-    start = (page - 1) * per_page
-    end = start + per_page
+    page = request.args.get('page', 1, type=int)
 
     unit_record = Unit.query.filter(and_(Unit.date <= endDate, Unit.date >= startDate)).all()
 
     if not unit_record:
         return make_response(jsonify({'message': 'The record between the date does not exist'}), 404)
 
-    total_pages = (len(unit_record) + per_page - 1) // per_page
-    item_on_page = unit_record[start:end]
+    total_pages, item_on_page = pagination(page, unit_record, 5)
 
     output = []
     for record in item_on_page:
@@ -592,19 +585,14 @@ def get_unit_by_date(current_user, role):
 def get_unit_by_room(current_user, role):
     query = request.args.get('query', type=str)
     # pagination
-    page = request.args.get('page', type=int)
-
-    per_page = 5
-    start = (page - 1) * per_page
-    end = start + per_page
+    page = request.args.get('page', 1, type=int)
 
     unit_record = Unit.query.filter(Unit.res_room.like(query)).all()
 
     if not unit_record:
         return make_response(jsonify({'message': 'The record with the room number does not exist'}), 404)
 
-    total_pages = (len(unit_record) + per_page - 1) // per_page
-    item_on_page = unit_record[start:end]
+    total_pages, item_on_page = pagination(page, unit_record, 5)
 
     output = []
     for record in item_on_page:
@@ -630,14 +618,10 @@ def get_unit_by_room(current_user, role):
 def get_units(current_user, role):
     # pagination
     page = request.args.get('page', 1, type=int)
-    per_page = 5
-    start = (page - 1) * per_page
-    end = start + per_page
 
     unit_record = Unit.query.order_by(Unit.id).all()
 
-    total_pages = (len(unit_record) + per_page - 1) // per_page
-    item_on_page = unit_record[start:end]
+    total_pages, item_on_page = pagination(page, unit_record, 5)
 
     output = []
     for record in item_on_page:
@@ -678,7 +662,7 @@ def update_unit(current_user, role, rec_id):
 
     change_data = request.get_json()
     change_numberOfUnits = change_data['numberOfUnits']
-    change_date = date.datetime.strptime(change_data['date'], date_format)
+    change_date = toDate(change_data['date'])
     change_extractionStatus = change_data['extractionStatus']
     change_approveStatus = change_data['approveStatus']
     change_room = change_data['res_room']
