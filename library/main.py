@@ -17,5 +17,5 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db, render_as_batch=True) # obj for db migrations
 CORS(app)
 
-# from library import models, resources
-import library.resources as resources
+
+from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth

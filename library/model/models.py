@@ -1,9 +1,7 @@
-from sqlalchemy.orm import backref
 from flask import request, jsonify, make_response
 from library.main import app, db
 from functools import wraps
 import jwt
-from flask_restful import abort
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.event import listen
 from sqlalchemy import text
@@ -36,6 +34,44 @@ class UserRoles(db.Model):
     role_id = db.Column(db.Integer(), db.ForeignKey('roles.id', ondelete='CASCADE'))
 
 
+# resident table
+class Resident(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    lineId = db.Column(db.String)
+    roomNumber = db.Column(db.String, nullable=False, unique=True)
+    unit = db.relationship('Unit', backref='resident')
+    search_vector = db.Column(TSVECTOR)
+
+    __table_args__ = (
+        db.Index('ix_resident_search_vector', 'search_vector', postgresql_using='gin'),
+    )
+
+    def __repr__(self):
+        return f'<Resident "{self.title}">'
+
+
+# unit from meter OCR table
+class Unit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    numberOfUnits = db.Column(db.String)
+    date = db.Column(db.Date)
+    extractionStatus = db.Column(db.String)
+    approveStatus = db.Column(db.Boolean)
+    res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
+
+    def __repr__(self):
+        return f'<Unit "{self.title}">'
+
+
+def update_search_vector(mapper, connection, target):
+    connection.execute(
+        Resident.__table__.update().
+        where(Resident.id == target.id).
+        values(search_vector=text('to_tsvector(\'english\', name)'))
+    )
+
+
 # token decorator
 def token_required(f):
     @wraps(f)
@@ -56,43 +92,6 @@ def token_required(f):
         return f(current_user, role, *args, **kwargs)
     return decorator
 
-# resident table
-class Resident(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String, nullable=False)
-    lineId = db.Column(db.String)
-    roomNumber = db.Column(db.String, nullable=False, unique=True)
-    unit = db.relationship('Unit', backref='resident')
-    search_vector = db.Column(TSVECTOR)
-
-    __table_args__ = (
-        db.Index('ix_resident_search_vector', 'search_vector', postgresql_using='gin'),
-    )
-
-    def __repr__(self):
-        return f'<Resident "{self.title}">'
-
-# unit from meter OCR table
-class Unit(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    numberOfUnits = db.Column(db.String)
-    date = db.Column(db.Date)
-    extractionStatus = db.Column(db.String)
-    approveStatus = db.Column(db.Boolean)
-    res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
-
-    def __repr__(self):
-        return f'<Unit "{self.title}">'
-
-def update_search_vector(mapper, connection, target):
-    connection.execute(
-        Resident.__table__.update().
-        where(Resident.id == target.id).
-        values(search_vector=text('to_tsvector(\'english\', name)'))
-    )
-
-
-db.create_all()
 
 listen(Resident, 'after_insert', update_search_vector)
 listen(Resident, 'after_update', update_search_vector)
