@@ -18,4 +18,4 @@ migrate = Migrate(app, db, render_as_batch=True) # obj for db migrations
 CORS(app)
 
 
-from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth
+from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth, dev_routes
