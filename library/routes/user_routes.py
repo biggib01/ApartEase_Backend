@@ -88,6 +88,8 @@ def get_users(current_user, role):
     if not users:
         return make_response(jsonify({"message": "There is no user data yet!"}), 404)
 
+    total_users = len(users)
+
     total_pages, item_on_page = pagination(page, users, 5)
 
     output = []
@@ -114,6 +116,7 @@ def get_users(current_user, role):
         page_data = {}
         page_data['total_pages'] = total_pages
         page_data['page'] = page
+        page_data['total_users'] = total_users
         output.append(page_data)
         return jsonify({'User': output})
 

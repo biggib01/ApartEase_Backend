@@ -1,4 +1,5 @@
 from flask import request, jsonify, make_response
+from library.functions import pagination
 from library.main import db, app
 from library.model.models import token_required, Roles
 
@@ -86,16 +87,35 @@ def get_roles(current_user, role):
     if role != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
-    roles = Roles.query.all()
+    # pagination
+    page = request.args.get('page', 1, type=int)
+
+    roles = Roles.query.order_by(Roles.id).all()
+
+    if not roles:
+        return make_response(jsonify({'message': 'There is no role data yet!'}), 404)
+
+    total_roles = len(roles)
+
+    total_pages, item_on_page = pagination(page, roles, 5)
+
     output = []
-    for role in roles:
+    for role in item_on_page:
         user_data = {}
         user_data['id'] = role.id
         user_data['role_name'] = role.name
 
         output.append(user_data)
 
-    return jsonify({'Role': output})
+    if len(output) == 0:
+        return make_response(jsonify({'message': 'There is no role data left!'}), 404)
+    else:
+        page_data = {}
+        page_data['total_pages'] = total_pages
+        page_data['page'] = page
+        page_data['total_roles'] = total_roles
+        output.append(page_data)
+        return jsonify({'Role': output})
 
 
 # get role by id [http://localhost/role/list/x]
