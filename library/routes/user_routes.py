@@ -1,5 +1,6 @@
 from flask import request, jsonify, make_response
 from werkzeug.security import generate_password_hash
+from library.functions import pagination
 from library.main import db, app
 from library.model.models import Users, token_required, Roles
 
@@ -79,9 +80,18 @@ def get_users(current_user, role):
     if role != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
+    # pagination
+    page = request.args.get('page', 1, type=int)
+
     users = Users.query.order_by(Users.id).all()
+
+    if not users:
+        return make_response(jsonify({"message": "There is no user data yet!"}), 404)
+
+    total_pages, item_on_page = pagination(page, users, 5)
+
     output = []
-    for user in users:
+    for user in item_on_page:
         user_data = {}
         user_data['id'] = user.id
         user_data['username'] = user.username
@@ -98,7 +108,14 @@ def get_users(current_user, role):
 
         output.append(user_data)
 
-    return jsonify({'Users': output})
+    if len(output) == 0:
+        return make_response(jsonify({'message': 'There is no user data left!'}), 404)
+    else:
+        page_data = {}
+        page_data['total_pages'] = total_pages
+        page_data['page'] = page
+        output.append(page_data)
+        return jsonify({'Users': output})
 
 
 # get user by id [http://localhost/user/list/x]
