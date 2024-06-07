@@ -115,7 +115,7 @@ def get_users(current_user, role):
         page_data['total_pages'] = total_pages
         page_data['page'] = page
         output.append(page_data)
-        return jsonify({'Users': output})
+        return jsonify({'User': output})
 
 
 # get user by id [http://localhost/user/list/x]
@@ -144,7 +144,7 @@ def get_user(current_user, role, uid):
 
     user_data['has_admin_role'] = role_list
 
-    return jsonify({'message': user_data})
+    return jsonify({'User': user_data})
 
 
 # deleting a user [http://localhost/user/del/x]

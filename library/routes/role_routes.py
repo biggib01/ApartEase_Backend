@@ -95,7 +95,7 @@ def get_roles(current_user, role):
 
         output.append(user_data)
 
-    return jsonify({'Roles': output})
+    return jsonify({'Role': output})
 
 
 # get role by id [http://localhost/role/list/x]
@@ -115,5 +115,5 @@ def get_role(current_user, role, rid):
     role_data['id'] = role_result.id
     role_data['name'] = role_result.name
 
-    return jsonify({'message': role_data})
+    return jsonify({'Role': role_data})
 

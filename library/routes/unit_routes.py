@@ -62,6 +62,8 @@ def get_unit_by_date(current_user, role):
     if not unit_record:
         return make_response(jsonify({'message': 'The record between the date does not exist'}), 404)
 
+    total_record = len(unit_record)
+
     total_pages, item_on_page = pagination(page, unit_record, 5)
 
     output = []
@@ -75,11 +77,15 @@ def get_unit_by_date(current_user, role):
         record_data['res_room'] = record.res_room
         output.append(record_data)
 
-    page_data = {}
-    page_data['total_pages'] = total_pages
-    page_data['page'] = page
-    output.append(page_data)
-    return jsonify({'Unit': output})
+    if len(output) == 0:
+        return make_response(jsonify({'message': 'There is no record data left!'}), 404)
+    else:
+        page_data = {}
+        page_data['total_pages'] = total_pages
+        page_data['page'] = page
+        page_data['total_record'] = total_record
+        output.append(page_data)
+        return jsonify({'Unit': output})
 
 
 # get record list by room number [http://localhost/unit/list/room?page=x&query=x]
@@ -95,6 +101,8 @@ def get_unit_by_room(current_user, role):
     if not unit_record:
         return make_response(jsonify({'message': 'The record with the room number does not exist'}), 404)
 
+    total_record = len(unit_record)
+
     total_pages, item_on_page = pagination(page, unit_record, 5)
 
     output = []
@@ -108,11 +116,15 @@ def get_unit_by_room(current_user, role):
         record_data['res_room'] = record.res_room
         output.append(record_data)
 
-    page_data = {}
-    page_data['total_pages'] = total_pages
-    page_data['page'] = page
-    output.append(page_data)
-    return jsonify({'Unit': output})
+    if len(output) == 0:
+        return make_response(jsonify({'message': 'There is no record data left!'}), 404)
+    else:
+        page_data = {}
+        page_data['total_pages'] = total_pages
+        page_data['page'] = page
+        page_data['total_record'] = total_record
+        output.append(page_data)
+        return jsonify({'Unit': output})
 
 
 # get all records with pagination [http://localhost/unit/list]
@@ -124,6 +136,11 @@ def get_units(current_user, role):
 
     unit_record = Unit.query.order_by(Unit.id).all()
 
+    if not unit_record:
+        return make_response(jsonify({"message": "There is no record data yet!"}), 404)
+
+    total_record = len(unit_record)
+
     total_pages, item_on_page = pagination(page, unit_record, 5)
 
     output = []
@@ -137,11 +154,15 @@ def get_units(current_user, role):
         record_data['res_room'] = record.res_room
         output.append(record_data)
 
-    page_data = {}
-    page_data['total_pages'] = total_pages
-    page_data['page'] = page
-    output.append(page_data)
-    return jsonify({'Unit': output})
+    if len(output) == 0:
+        return make_response(jsonify({'message': 'There is no record data left!'}), 404)
+    else:
+        page_data = {}
+        page_data['total_pages'] = total_pages
+        page_data['page'] = page
+        page_data['total_record'] = total_record
+        output.append(page_data)
+        return jsonify({'Unit': output})
 
 
 # deleting a record [http://localhost/unit/del/x]
