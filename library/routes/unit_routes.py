@@ -179,10 +179,9 @@ def delete_unit(current_user, role, rec_id):
 
 
 # update record [http://localhost/unit/edit/x]
-@app.route('/unit/edit/<rec_id>', methods=['POST'])
+@app.route('/unit/edit/<rec_id>', methods=['PUT'])
 @token_required
 def update_unit(current_user, role, rec_id):
-    date_format = '%Y-%m-%d'
 
     change_data = request.get_json()
     change_numberOfUnits = change_data['numberOfUnits']
@@ -195,11 +194,16 @@ def update_unit(current_user, role, rec_id):
 
     if unit_record:
         try:
-            unit_record.numberOfUnits = change_numberOfUnits
-            unit_record.date = change_date
-            unit_record.extractionStatus = change_extractionStatus
-            unit_record.approveStatus = change_approveStatus
-            unit_record.res_room = change_room
+            if change_numberOfUnits:
+                unit_record.numberOfUnits = change_numberOfUnits
+            if change_date:
+                unit_record.date = change_date
+            if change_extractionStatus:
+                unit_record.extractionStatus = change_extractionStatus
+            if change_approveStatus:
+                unit_record.approveStatus = change_approveStatus
+            if change_room:
+                unit_record.res_room = change_room
 
             db.session.commit()
         except:

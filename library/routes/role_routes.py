@@ -39,7 +39,7 @@ def create_role(current_user, role):
 
 
 # edit role's info [http://localhost/role/edit/x]
-@app.route('/role/edit/<rid>', methods=['POST'])
+@app.route('/role/edit/<rid>', methods=['PUT'])
 @token_required
 def edit_role(current_user, role, rid):
     # role check
@@ -53,11 +53,14 @@ def edit_role(current_user, role, rid):
 
     if role_result:
 
-        role_result.name = change_role
+        if change_role:
+            role_result.name = change_role
 
-        db.session.commit()
+            db.session.commit()
 
-        return make_response(jsonify({'message': 'Role data has been update'}), 200)
+            return make_response(jsonify({'message': 'Role data has been update'}), 200)
+        else:
+            return make_response(jsonify({'message': 'Please input the new name of the role'}), 400)
     else:
         return make_response(jsonify({"message": "The role does not exists!"}), 404)
 

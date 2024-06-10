@@ -175,7 +175,7 @@ def delete_resident(current_user, role, res_id):
 
 
 # update resident by id [http://localhost/resident/edit/x]
-@app.route('/resident/edit/<res_id>', methods=['POST'])
+@app.route('/resident/edit/<res_id>', methods=['PUT'])
 @token_required
 def update_resident(current_user, role, res_id):
     change_data = request.get_json()
@@ -191,9 +191,12 @@ def update_resident(current_user, role, res_id):
         if check_room and check_room.roomNumber != resident.roomNumber:
             return make_response(jsonify({"message": "There's other resident in this room already!"}), 409)
         else:
-            resident.name = change_name
-            resident.lineId = change_lineId
-            resident.roomNumber = change_roomNumber
+            if change_name:
+                resident.name = change_name
+            if change_lineId:
+                resident.lineId = change_lineId
+            if change_roomNumber:
+                resident.roomNumber = change_roomNumber
 
             db.session.commit()
 

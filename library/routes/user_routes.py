@@ -40,7 +40,7 @@ def create_user(current_user, role):
 
 
 # edit user's info [http://localhost/user/edit/x]
-@app.route('/user/edit/<uid>', methods=['POST'])
+@app.route('/user/edit/<uid>', methods=['PUT'])
 @token_required
 def edit_user(current_user, role, uid):
     # role check
@@ -49,21 +49,25 @@ def edit_user(current_user, role, uid):
 
     change_data = request.get_json()
     change_username = change_data['username']
-    change_password = generate_password_hash(change_data['password'], method='sha256')
+    change_password = change_data['password']
     change_role = change_data['role']
 
     user = Users.query.filter_by(id=uid).first()
 
     if user:
-        user.username = change_username
-        user.password = change_password
+        if change_username:
+            user.username = change_username
 
-        role = Roles.query.filter_by(name=change_role).first()
+        if change_password:
+            user.password = generate_password_hash(change_password, method='sha256')
 
-        if not role:
-            return make_response(jsonify({"message": "The role dose not exists"}), 404)
+        if change_role:
+            role = Roles.query.filter_by(name=change_role).first()
 
-        user.roles.append(role)
+            if not role:
+                return make_response(jsonify({"message": "The role dose not exists"}), 404)
+
+            user.roles.append(role)
 
         db.session.commit()
 
