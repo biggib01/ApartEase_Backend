@@ -17,7 +17,7 @@
     > JSON body `none`
   - Get resident by name ```('/resident/list/name?query=<name>&page=<page_number>', methods=['GET'])``` 🎩 <br>
     > JSON body `none`
-  - Update resident by id ```('/resident/edit/<res_id>', methods=['POST'])``` ✍️ <br>
+  - Update resident by id ```('/resident/edit/<res_id>', methods=['PUT'])``` ✍️ <br>
     > JSON body `"name:str", "lineId:str", "roomNumber:str"`
   - Delete resident by id ```('/resident/del/<res_id>', methods=['DELETE'])``` 💥 <br>
     > JSON body `none`
@@ -32,7 +32,7 @@
     > JSON body `none` <br> Date format is `YYYY-mm-dd`
   - GET unit record by room number ```('/unit/list/room?query=<room_number>&page=<page_number>', methods=['GET'])``` 🚪 <br>
     > JSON body `none`
-  - Update unit record by id ```('/unit/edit/<rec_id>', methods=['POST'])``` ✍️ <br>
+  - Update unit record by id ```('/unit/edit/<rec_id>', methods=['PUT'])``` ✍️ <br>
     > JSON body `"numberOfUnits:str", "date:str", "extractionStatus:str", "approveStatus:bool", "res_room:str"`<br> Date format is `YYYY-mm-dd`
   - Delete unit record by id ```('/unit/del/<rec_id>', methods=['DELETE'])``` 💥 <br>
     > JSON body `none`
@@ -44,7 +44,7 @@
     > JSON body `none`
   - GET user by id ```('/user/list/<uid>', methods=['GET'])``` 👨‍💻 <br>
     > JSON body `none`
-  - Update user by id ```('/user/edit/<uid>', methods=['POST'])``` ✍️ <br>
+  - Update user by id ```('/user/edit/<uid>', methods=['PUT'])``` ✍️ <br>
     > JSON body `"username:str", "password:str", "role:str"`
   - Delete user by id ```('/user/del/<uid>', methods=['DELETE'])``` 💥 <br>
     > JSON body `none`
@@ -56,7 +56,7 @@
     > JSON body `none`
   - GET role by id ```('/role/list/<rid>', methods=['GET'])``` 🗒️ <br>
     > JSON body `none`
-  - Update role by id ```('/role/edit/<rid>', methods=['POST'])``` ✍️ <br>
+  - Update role by id ```('/role/edit/<rid>', methods=['PUT'])``` ✍️ <br>
     > JSON body `"role_name:str"`
   - Delete role by id ```('/role/del/<rid>', methods=['DELETE'])``` 💥 <br>
     > JSON body `none`
