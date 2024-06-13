@@ -11,7 +11,7 @@ from library.model.models import Users, token_required, Roles
 @token_required
 def create_user(current_user, role):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     data = request.get_json()
@@ -44,7 +44,7 @@ def create_user(current_user, role):
 @token_required
 def edit_user(current_user, role, uid):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     change_data = request.get_json()
@@ -81,16 +81,13 @@ def edit_user(current_user, role, uid):
 @token_required
 def get_users(current_user, role):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     # pagination
     page = request.args.get('page', 1, type=int)
 
     users = Users.query.order_by(Users.id).all()
-
-    if not users:
-        return make_response(jsonify({"message": "There is no user data yet!"}), 404)
 
     total_users = len(users)
 
@@ -101,16 +98,7 @@ def get_users(current_user, role):
         user_data = {}
         user_data['id'] = user.id
         user_data['username'] = user.username
-
-        role_list = []
-
-        for role in user.roles:
-            role_data = {}
-            role_data['name'] = role.name
-
-            role_list.append(role_data)
-
-        user_data['has_admin_role'] = role_list
+        user_data['role'] = user.roles[0].name
 
         output.append(user_data)
 
@@ -130,7 +118,7 @@ def get_users(current_user, role):
 @token_required
 def get_user(current_user, role, uid):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     user = Users.query.filter_by(id=uid).first()
@@ -141,15 +129,7 @@ def get_user(current_user, role, uid):
     user_data = {}
     user_data['id'] = user.id
     user_data['username'] = user.username
-    role_list = []
-
-    for role in user.roles:
-        role_data = {}
-        role_data['name'] = role.name
-
-        role_list.append(role_data)
-
-    user_data['has_admin_role'] = role_list
+    user_data['role'] = user.roles[0].name
 
     return jsonify({'User': user_data})
 
@@ -159,7 +139,7 @@ def get_user(current_user, role, uid):
 @token_required
 def delete_user(current_user, role, uid):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     user = Users.query.filter_by(id=uid).first()

@@ -48,7 +48,7 @@ class Resident(db.Model):
     )
 
     def __repr__(self):
-        return f'<Resident "{self.title}">'
+        return f'<Resident "{self.name}">'
 
 
 # unit from meter OCR table
@@ -61,7 +61,7 @@ class Unit(db.Model):
     res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
 
     def __repr__(self):
-        return f'<Unit "{self.title}">'
+        return f'<Unit "{self.id}">'
 
 
 def update_search_vector(mapper, connection, target):

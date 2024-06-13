@@ -10,7 +10,7 @@ from library.model.models import token_required, Roles
 @token_required
 def create_role(current_user, role):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     data = request.get_json()
@@ -43,7 +43,7 @@ def create_role(current_user, role):
 @token_required
 def edit_role(current_user, role, rid):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     change_data = request.get_json()
@@ -70,7 +70,7 @@ def edit_role(current_user, role, rid):
 @token_required
 def delete_role(current_user, role, rid):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     role = Roles.query.filter_by(id=rid).first()
@@ -87,16 +87,13 @@ def delete_role(current_user, role, rid):
 @token_required
 def get_roles(current_user, role):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     # pagination
     page = request.args.get('page', 1, type=int)
 
     roles = Roles.query.order_by(Roles.id).all()
-
-    if not roles:
-        return make_response(jsonify({'message': 'There is no role data yet!'}), 404)
 
     total_roles = len(roles)
 
@@ -126,7 +123,7 @@ def get_roles(current_user, role):
 @token_required
 def get_role(current_user, role, rid):
     # role check
-    if role != "admin":
+    if role.lower() != "admin":
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     role_result = Roles.query.filter_by(id=rid).first()
