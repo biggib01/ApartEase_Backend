@@ -67,7 +67,7 @@ def edit_user(current_user, role, uid):
             if not role:
                 return make_response(jsonify({"message": "The role dose not exists"}), 404)
 
-            user.roles.append(role)
+            user.roles = [role]
 
         db.session.commit()
 
