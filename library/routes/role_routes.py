@@ -52,15 +52,19 @@ def edit_role(current_user, role, rid):
     role_result = Roles.query.filter_by(id=rid).first()
 
     if role_result:
+        check_role = Roles.query.filter_by(name=change_role).first()
 
-        if change_role:
-            role_result.name = change_role
-
-            db.session.commit()
-
-            return make_response(jsonify({'message': 'Role data has been update'}), 200)
+        if check_role and check_role.name != role_result.name:
+            return make_response(jsonify({'message': 'The role name already exist'}), 401)
         else:
-            return make_response(jsonify({'message': 'Please input the new name of the role'}), 400)
+            if change_role:
+                role_result.name = change_role
+
+                db.session.commit()
+
+                return make_response(jsonify({'message': 'Role data has been update'}), 200)
+            else:
+                return make_response(jsonify({'message': 'Please input the new name of the role'}), 400)
     else:
         return make_response(jsonify({"message": "The role does not exists!"}), 404)
 
