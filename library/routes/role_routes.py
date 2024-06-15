@@ -55,7 +55,7 @@ def edit_role(current_user, role, rid):
         check_role = Roles.query.filter_by(name=change_role).first()
 
         if check_role and check_role.name != role_result.name:
-            return make_response(jsonify({'message': 'The role name already exist'}), 401)
+            return make_response(jsonify({'message': 'The role name already exist'}), 409)
         else:
             if change_role:
                 role_result.name = change_role
