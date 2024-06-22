@@ -55,23 +55,28 @@ def edit_user(current_user, role, uid):
     user = Users.query.filter_by(id=uid).first()
 
     if user:
-        if change_username:
-            user.username = change_username
+        check_username = Users.query.filter_by(username=change_username).first()
 
-        if change_password:
-            user.password = generate_password_hash(change_password, method='sha256')
+        if check_username and check_username.username != user.username:
+            return make_response(jsonify({'message': 'The username already exist'}), 409)
+        else:
+            if change_username:
+                user.username = change_username
 
-        if change_role:
-            role = Roles.query.filter_by(name=change_role).first()
+            if change_password:
+                user.password = generate_password_hash(change_password, method='sha256')
 
-            if not role:
-                return make_response(jsonify({"message": "The role dose not exists"}), 404)
+            if change_role:
+                role = Roles.query.filter_by(name=change_role).first()
 
-            user.roles = [role]
+                if not role:
+                    return make_response(jsonify({"message": "The role dose not exists"}), 404)
 
-        db.session.commit()
+                user.roles = [role]
 
-        return make_response(jsonify({'message': 'User data has been update'}), 200)
+            db.session.commit()
+
+            return make_response(jsonify({'message': 'User data has been update'}), 200)
     else:
         return make_response(jsonify({"message": "There's no user exists!"}), 404)
 
