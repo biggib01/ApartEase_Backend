@@ -92,6 +92,8 @@ def token_required(f):
         return f(current_user, role, *args, **kwargs)
     return decorator
 
+db.create_all()
+
 
 listen(Resident, 'after_insert', update_search_vector)
 listen(Resident, 'after_update', update_search_vector)
