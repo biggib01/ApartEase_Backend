@@ -51,7 +51,18 @@ class Resident(db.Model):
         return f'<Resident "{self.name}">'
 
 
-# unit from meter OCR table
+# # unit from meter OCR table
+# class Unit(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     numberOfUnits = db.Column(db.String)
+#     date = db.Column(db.Date)
+#     extractionStatus = db.Column(db.String)
+#     approveStatus = db.Column(db.Boolean)
+#     res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
+
+#     def __repr__(self):
+#         return f'<Unit "{self.id}">'
+
 class Unit(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     numberOfUnits = db.Column(db.String)
@@ -59,9 +70,48 @@ class Unit(db.Model):
     extractionStatus = db.Column(db.String)
     approveStatus = db.Column(db.Boolean)
     res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
+    costPerUnit = db.Column(db.Float)  # Add this line
+    waterCost = db.Column(db.Float)    # Add this line
+    rentCost = db.Column(db.Float)     # Add this line
+
 
     def __repr__(self):
         return f'<Unit "{self.id}">'
+
+
+        
+# unit history table
+class UnitHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    numberOfUnits = db.Column(db.String)
+    date = db.Column(db.Date)
+    extractionStatus = db.Column(db.String)
+    approveStatus = db.Column(db.Boolean)
+    res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
+    status = db.Column(db.String, default='pending') # Default status is 'pending'
+    costPerUnit = db.Column(db.Float) 
+    waterCost = db.Column(db.Float)   
+    rentCost = db.Column(db.Float)     
+
+    def __repr__(self):
+        return f'<UnitHistory "{self.id}">'
+
+
+
+
+class Bill(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.Date, nullable=False)
+    res_room = db.Column(db.String(50), nullable=False)
+    totalUnit = db.Column(db.Integer, nullable=False)
+    totalBill = db.Column(db.Float, nullable=False)
+    waterCost = db.Column(db.Float, nullable=True)
+    rentCost = db.Column(db.Float, nullable=True)
+    costPerUnit = db.Column(db.Float, nullable=True)
+
+    def __repr__(self):
+        return f'<Bill "{self.id}">'
+
 
 
 def update_search_vector(mapper, connection, target):
@@ -91,6 +141,8 @@ def token_required(f):
 
         return f(current_user, role, *args, **kwargs)
     return decorator
+
+
 
 db.create_all()
 

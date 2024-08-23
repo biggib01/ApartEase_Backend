@@ -1,8 +1,9 @@
 import os
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy, BaseQuery
+from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
+from flask_mail import Mail
 from config import app_config
 
 config_name = os.getenv('FLASK_ENV', 'default')
@@ -17,5 +18,9 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db, render_as_batch=True) # obj for db migrations
 CORS(app)
 
+# Mail configuration
+mail = Mail(app)
+print(f"Mail server: {app.config['MAIL_SERVER']}, Mail username: {app.config['MAIL_USERNAME']}")
 
-from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth, dev_routes
+
+from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth, dev_routes, bill_routes
