@@ -41,15 +41,6 @@ def send_bill_by_email(current_user, role, bill_id):
     Date: {bill.date}
     Room: {bill.res_room}
 
-    Charges:
-    --------
-    Rent: ฿{bill.rentCost:.2f}
-    Water: ฿{bill.waterCost:.2f}
-    Electricity:
-        Total Units: {bill.totalUnit}
-        Cost Per Unit: ฿{bill.costPerUnit:.2f}
-        Total Electricity Cost: ฿{bill.totalUnit * bill.costPerUnit:.2f}
-
     Total Bill: ฿{bill.totalBill:.2f}
     Thank you.
     """
@@ -95,19 +86,10 @@ def send_all_bills(current_user, role):
             Date: {bill.date}
             Room: {bill.res_room}
 
-            
-            Charges:
-            --------
-            Rent: ฿{bill.rentCost:.2f}
-            Water: ฿{bill.waterCost:.2f}
-            Electricity:
-                Total Units: {bill.totalUnit}
-                Cost Per Unit: ฿{bill.costPerUnit:.2f}
-                Total Electricity Cost: ฿{bill.totalUnit * bill.costPerUnit:.2f}
 
-                Total Bill: ฿{bill.totalBill:.2f}
-                Thank you.
-                """
+            Total Bill: ฿{bill.totalBill:.2f}
+            Thank you.
+            """
 
             # Create the email message
             msg = Message(subject, sender=app.config['MAIL_USERNAME'], recipients=[resident.lineId])
