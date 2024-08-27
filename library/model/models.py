@@ -79,6 +79,23 @@ class Bill(db.Model):
     is_sent = db.Column(db.Boolean, default=False)
     unit = db.relationship('Unit', backref=db.backref('bills', lazy=True))
 
+    @staticmethod
+    def create_or_update_bill(unit_id, date_created, amount):
+        existing_bill = Bill.query.filter_by(unit_id=unit_id, date_created=date_created).first()
+        if existing_bill:
+            existing_bill.amount = amount
+            db.session.commit()
+            return existing_bill, False  # False indicates that the bill was updated
+        else:
+            new_bill = Bill(
+                unit_id=unit_id,
+                date_created=date_created,
+                amount=amount
+            )
+            db.session.add(new_bill)
+            db.session.commit()
+            return new_bill, True  # True indicates that a new bill was created
+
     def send_bill(self):
         """Mark the bill as sent and move it to the BillHistory table."""
         self.is_sent = True
@@ -90,6 +107,10 @@ class Bill(db.Model):
         db.session.add(bill_history)
         db.session.commit()
 
+    @property
+    def res_room(self):
+        return self.unit.res_room if self.unit else None
+
 
 class BillHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -97,6 +118,12 @@ class BillHistory(db.Model):
     amount = db.Column(db.Float)
     date_sent = db.Column(db.Date)
     unit = db.relationship('Unit', backref=db.backref('bill_histories', lazy=True))
+
+    @property
+    def res_room(self):
+        return self.unit.res_room if self.unit else None
+
+
 
 
 

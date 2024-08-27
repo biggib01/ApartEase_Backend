@@ -1,40 +1,60 @@
 from flask import request, jsonify, make_response
 from library.main import db, app
-from library.model.models import token_required, BillHistory, Resident
+from library.model.models import token_required, BillHistory, Resident, Unit, Bill
 from library.functions import pagination, toDate
+
 
 @app.route('/bill/history/add', methods=['POST'])
 @token_required
 def add_bill_history(current_user, role):
     data = request.get_json()
+
+    # Ensure data is either a list or a single dictionary
+    if not isinstance(data, (list, dict)):
+        return jsonify({'message': 'Data should be a list or a single bill history record'}), 400
+
+    # If data is a single dictionary, convert it to a list
+    if isinstance(data, dict):
+        data = [data]
+
     try:
-        print(f"Received data: {data}")  # Log the received data
+        for record in data:
+            print(f"Received data: {record}")  # Log the received data
 
-        # Check for missing required fields
-        required_fields = ['unit_id', 'amount', 'date_sent']
-        missing_fields = [field for field in required_fields if field not in data]
-        if missing_fields:
-            return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+            # Check for missing required fields
+            required_fields = ['unit_id', 'amount', 'date_sent']
+            missing_fields = [field for field in required_fields if field not in record]
+            if missing_fields:
+                return jsonify({'message': f'Missing required fields in one of the records: {", ".join(missing_fields)}'}), 400
 
-        # Check if the unit_id exists in the Unit table
-        unit = Unit.query.get(data['unit_id'])
-        if not unit:
-            return jsonify({'message': 'The specified unit_id does not exist in the Unit table'}), 400
+            # Check if the unit_id exists in the Unit table
+            unit = Unit.query.get(record['unit_id'])
+            if not unit:
+                return jsonify({'message': f'The specified unit_id {record["unit_id"]} does not exist in the Unit table'}), 400
 
-        new_history = BillHistory(
-            unit_id=data['unit_id'],
-            amount=data['amount'],
-            date_sent=toDate(data['date_sent'])
-        )
-        db.session.add(new_history)
+            # Check if a bill history record already exists for the given unit_id and date_sent
+            existing_history = BillHistory.query.filter_by(unit_id=record['unit_id'], date_sent=toDate(record['date_sent'])).first()
+            if existing_history:
+                existing_history.amount = record['amount']
+            else:
+                new_history = BillHistory(
+                    unit_id=record['unit_id'],
+                    amount=record['amount'],
+                    date_sent=toDate(record['date_sent'])
+                )
+                db.session.add(new_history)
+
         db.session.commit()
-        return jsonify({'message': 'Bill history record added successfully!'})
+        return jsonify({'message': 'Bill history records processed successfully!'})
     except KeyError as e:
         print(f"Missing key in data: {e}")  # Log the specific missing key
         return jsonify({'message': f'Missing key: {e}'}), 400
     except Exception as e:
         print(f"Error adding bill history: {e}")  # Log the error
-        return jsonify({'message': f'Error adding bill history: Unit with ID {data["unit_id"]} does not exist'}), 400
+        return jsonify({'message': f'Error adding bill history: {str(e)}'}), 400
+
+
+
 
 
 
@@ -59,7 +79,8 @@ def get_bill_history(current_user, role):
             'id': record.id,
             'unit_id': record.unit_id,
             'amount': record.amount,
-            'date_sent': record.date_sent
+            'date_sent': record.date_sent,
+            'res_room': record.res_room  # Include the room number
         }
         output.append(record_data)
 
@@ -73,6 +94,7 @@ def get_bill_history(current_user, role):
         }
         output.append(page_data)
         return jsonify({'BillHistory': output})
+
 
 
 @app.route('/bill/history/date', methods=['GET'])
@@ -150,6 +172,28 @@ def delete_bill_history(current_user, role, id):
     except Exception as e:
         print(f"Error deleting bill history: {e}")  # Log the error
         return jsonify({'message': 'Error deleting bill history'}), 500
+    
+
+
+# Delete all bill history records [http://localhost/bill/history/del_all]
+@app.route('/bill/history/del_all', methods=['DELETE'])
+@token_required
+def delete_all_bill_history(current_user, role):
+    try:
+        # Fetch all bill history records
+        bill_histories = BillHistory.query.all()
+        if not bill_histories:
+            return make_response(jsonify({'message': 'No bill history records found'}), 404)
+
+        # Delete all bill history records
+        for bill_history in bill_histories:
+            db.session.delete(bill_history)
+        db.session.commit()
+
+        return make_response(jsonify({'message': 'All bill history records deleted successfully'}), 200)
+    except Exception as e:
+        print(f"Error deleting all bill history records: {e}")
+        return make_response(jsonify({'message': 'Error deleting all bill history records', 'error': str(e)}), 500)    
 
 
 @app.route('/bill/history/detail/<int:id>', methods=['GET'])

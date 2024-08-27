@@ -10,28 +10,44 @@ from library.functions import toDate, pagination
 # add a unit, [http://localhost/unit/add]
 @app.route('/unit/add', methods=['POST'])
 @token_required
-def create_unit(current_user, role):
+def create_or_update_unit(current_user, role):
     data = request.get_json()
 
     try:
         approve_status = data['approveStatus']
         extraction_status = 'Succeeded' if approve_status else 'Failed'
+        res_room = data['res_room']
+        number_of_units = data['numberOfUnits']
 
-        new_unitRecord = Unit(
-            numberOfUnits=data['numberOfUnits'],
-            prevNumberOfUnits=data['prevNumberOfUnits'],
-            date=date.datetime.now(),
-            extractionStatus=extraction_status,
-            approveStatus=approve_status,
-            res_room=data['res_room']
-        )
-        db.session.add(new_unitRecord)
+        # Check if a unit record already exists for the given room number
+        existing_unit = Unit.query.filter_by(res_room=res_room).first()
+
+        if existing_unit:
+            # Update the existing unit record
+            existing_unit.prevNumberOfUnits = existing_unit.numberOfUnits
+            existing_unit.numberOfUnits = number_of_units
+            existing_unit.date = date.datetime.now()
+            existing_unit.extractionStatus = extraction_status
+            existing_unit.approveStatus = approve_status
+        else:
+            # Create a new unit record with prevNumberOfUnits set to 0
+            new_unitRecord = Unit(
+                numberOfUnits=number_of_units,
+                prevNumberOfUnits='0',
+                date=date.datetime.now(),
+                extractionStatus=extraction_status,
+                approveStatus=approve_status,
+                res_room=res_room
+            )
+            db.session.add(new_unitRecord)
+
         db.session.commit()
 
-        return make_response(jsonify({'message': 'new unit record created'}), 200)
+        return make_response(jsonify({'message': 'Unit record processed successfully'}), 200)
     except Exception as e:
-        print(f"Error creating unit: {e}")
-        return make_response(jsonify({'message': 'The room that record refer does not exist!'}), 404)
+        print(f"Error processing unit: {e}")
+        return make_response(jsonify({'message': 'The room that record refers to does not exist!'}), 404)
+
 
 
 
@@ -197,7 +213,6 @@ def delete_unit(current_user, role, rec_id):
 
 
 # update record [http://localhost/unit/edit/x]
-# update record [http://localhost/unit/edit/x]
 @app.route('/unit/edit/<rec_id>', methods=['PUT'])
 @token_required
 def update_unit(current_user, role, rec_id):
@@ -208,9 +223,9 @@ def update_unit(current_user, role, rec_id):
     if unit_record:
         try:
             if 'numberOfUnits' in change_data:
+                # Copy current numberOfUnits to prevNumberOfUnits before updating
+                unit_record.prevNumberOfUnits = unit_record.numberOfUnits
                 unit_record.numberOfUnits = change_data['numberOfUnits']
-            if 'prevNumberOfUnits' in change_data:
-                unit_record.prevNumberOfUnits = change_data['prevNumberOfUnits']
             if 'approveStatus' in change_data:
                 unit_record.approveStatus = change_data['approveStatus']
                 unit_record.extractionStatus = 'Succeeded' if change_data['approveStatus'] else 'Failed'
@@ -222,5 +237,6 @@ def update_unit(current_user, role, rec_id):
             return make_response(jsonify({"message": "Error updating unit data!"}), 404)
     else:
         return make_response(jsonify({"message": "There's no unit exists!"}), 404)
+
 
 

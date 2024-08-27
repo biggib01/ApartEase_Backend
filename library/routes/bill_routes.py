@@ -12,6 +12,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # --------------------Bill Management------------------------------#
+from flask import request, jsonify, make_response
+from library.main import db, app
+from library.model.models import token_required, Bill, Resident, Unit, BillHistory
+from flask_mail import Message
+from datetime import date
 
 @app.route('/bill/send/<bill_id>', methods=['POST'])
 @token_required
@@ -36,10 +41,10 @@ def send_bill_by_email(current_user, role, bill_id):
     Bill Details:
     ------------
     Bill ID: {bill.id}
-    Date: {bill.date}
+    Date: {bill.date_created}
     Room: {bill.res_room}
 
-    Total Bill: ฿{bill.totalBill:.2f}
+    Total Bill: ฿{bill.amount:.2f}
     Thank you.
     """
 
@@ -50,10 +55,28 @@ def send_bill_by_email(current_user, role, bill_id):
     try:
         # Send the email
         mail.send(msg)
-        return make_response(jsonify({'message': 'Bill sent successfully'}), 200)
+
+        # Add to bill history
+        new_history = BillHistory(
+            unit_id=bill.unit_id,
+            amount=bill.amount,
+            date_sent=date.today()
+        )
+        db.session.add(new_history)
+        db.session.commit()
+
+        # Delete the bill record
+        db.session.delete(bill)
+        db.session.commit()
+
+        return make_response(jsonify({'message': 'Bill sent successfully, added to bill history, and deleted'}), 200)
     except Exception as e:
         print(f"Error sending email: {e}")
         return make_response(jsonify({'message': 'Failed to send bill', 'error': str(e)}), 500)
+
+
+
+
 
 
 @app.route('/bill/send_all', methods=['POST'])
@@ -81,10 +104,10 @@ def send_all_bills(current_user, role):
             Bill Details:
             ------------
             Bill ID: {bill.id}
-            Date: {bill.date}
+            Date: {bill.date_created}
             Room: {bill.res_room}
 
-            Total Bill: ฿{bill.totalBill:.2f}
+            Total Bill: ฿{bill.amount:.2f}
             Thank you.
             """
 
@@ -95,26 +118,35 @@ def send_all_bills(current_user, role):
             try:
                 # Send the email
                 mail.send(msg)
+
+                # Add to bill history
+                new_history = BillHistory(
+                    unit_id=bill.unit_id,
+                    amount=bill.amount,
+                    date_sent=bill.date_created
+                )
+                db.session.add(new_history)
             except Exception as e:
                 print(f"Error sending email to {resident.lineId}: {e}")
 
-        return make_response(jsonify({'message': 'All bills sent successfully'}), 200)
+        db.session.commit()
+        return make_response(jsonify({'message': 'All bills sent successfully and added to bill history'}), 200)
     except Exception as e:
         print(f"Error sending all bills: {e}")
         return make_response(jsonify({'message': 'Failed to send all bills', 'error': str(e)}), 500)
 
 
-# Add a bill [http://localhost/bill/add]
-@app.route('/bill/add', methods=['POST'])
+# Add a bill [http://localhost/bill/add/<unit_id>]
+@app.route('/bill/add/<int:unit_id>', methods=['POST'])
 @token_required
-def create_bill(current_user, role):
+def create_bill(current_user, role, unit_id):
     data = request.get_json()
 
     # Log the received data
     logger.info(f"Received data: {data}")
 
     # Check for missing required fields
-    required_fields = ['date_created', 'unit_id', 'amount']
+    required_fields = ['date_created', 'amount']
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
@@ -122,29 +154,26 @@ def create_bill(current_user, role):
     try:
         # Validate data types
         date_created = toDate(data['date_created'])
-        unit_id = int(data['unit_id'])
         amount = float(data['amount'])
 
         # Check if the unit_id exists
         unit = Unit.query.get(unit_id)
         if not unit:
+            logger.error(f"Unit with id {unit_id} does not exist")
             return jsonify({'message': f'Unit with id {unit_id} does not exist'}), 400
 
-        new_bill = Bill(
-            date_created=date_created,
-            unit_id=unit_id,
-            amount=amount
-        )
-        db.session.add(new_bill)
-        db.session.commit()
+        bill, created = Bill.create_or_update_bill(unit_id, date_created, amount)
 
-        return make_response(jsonify({'message': 'New bill created'}), 200)
+        if created:
+            return make_response(jsonify({'message': 'New bill created'}), 200)
+        else:
+            return make_response(jsonify({'message': 'Bill updated'}), 200)
     except ValueError as ve:
         logger.error(f"Value error: {ve}")
         return make_response(jsonify({'message': f'Invalid data type: {ve}'}), 400)
     except Exception as e:
         logger.error(f"Error creating bill: {e}")
-        return make_response(jsonify({'message': 'Error creating bill', 'error': str(e)}), 500)
+        return make_response(jsonify({'message': 'Error creating bill'}), 500)
 
 
 # Get all bills with pagination [http://localhost/bill/list]
@@ -169,7 +198,8 @@ def get_bills(current_user, role):
             'id': bill.id,
             'date_created': bill.date_created,
             'unit_id': bill.unit_id,
-            'amount': bill.amount
+            'amount': bill.amount,
+            'res_room': bill.res_room  # Include resident room number
         }
         output.append(bill_data)
 
@@ -207,7 +237,8 @@ def get_bills_by_room(current_user, role):
             'id': bill.id,
             'date_created': bill.date_created,
             'unit_id': bill.unit_id,
-            'amount': bill.amount
+            'amount': bill.amount,
+            'res_room': bill.res_room  # Include resident room number
         }
         output.append(bill_data)
 
@@ -236,6 +267,27 @@ def delete_bill(current_user, role, bill_id):
     db.session.delete(bill)
     db.session.commit()
     return make_response(jsonify({'message': 'Bill deleted'}), 200)
+
+
+# Delete all bills [http://localhost/bill/del_all]
+@app.route('/bill/del_all', methods=['DELETE'])
+@token_required
+def delete_all_bills(current_user, role):
+    try:
+        # Fetch all bills
+        bills = Bill.query.all()
+        if not bills:
+            return make_response(jsonify({'message': 'No bills found'}), 404)
+
+        # Delete all bills
+        for bill in bills:
+            db.session.delete(bill)
+        db.session.commit()
+
+        return make_response(jsonify({'message': 'All bills deleted successfully'}), 200)
+    except Exception as e:
+        print(f"Error deleting all bills: {e}")
+        return make_response(jsonify({'message': 'Error deleting all bills', 'error': str(e)}), 500)
 
 
 # Update a bill by id [http://localhost/bill/edit/<bill_id>]
