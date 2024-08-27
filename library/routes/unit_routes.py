@@ -4,27 +4,26 @@ import datetime as date
 from library.main import db, app
 from library.model.models import token_required, Unit
 from library.functions import toDate, pagination
-from library.model.models import UnitHistory  # Import the UnitHistory model
 
 # --------------------Unit Record management------------------------------#
 
-#  add a unit, [http://localhost/unit/add]
+# add a unit, [http://localhost/unit/add]
 @app.route('/unit/add', methods=['POST'])
 @token_required
 def create_unit(current_user, role):
     data = request.get_json()
 
     try:
+        approve_status = data['approveStatus']
+        extraction_status = 'Succeeded' if approve_status else 'Failed'
+
         new_unitRecord = Unit(
             numberOfUnits=data['numberOfUnits'],
+            prevNumberOfUnits=data['prevNumberOfUnits'],
             date=date.datetime.now(),
-            extractionStatus=data['extractionStatus'],
-            approveStatus=False,
-            res_room=data['res_room'],
-            costPerUnit=data.get('costPerUnit'),  # Add this line
-            waterCost=data.get('waterCost'),      # Add this line
-            rentCost=data.get('rentCost'),        # Add this line
-   
+            extractionStatus=extraction_status,
+            approveStatus=approve_status,
+            res_room=data['res_room']
         )
         db.session.add(new_unitRecord)
         db.session.commit()
@@ -48,65 +47,57 @@ def get_unit(current_user, role, unit_id):
     record_data = {
         'id': unit_record.id,
         'numberOfUnits': unit_record.numberOfUnits,
+        'prevNumberOfUnits': unit_record.prevNumberOfUnits,
         'date': unit_record.date,
         'extractionStatus': unit_record.extractionStatus,
         'approveStatus': unit_record.approveStatus,
-        'res_room': unit_record.res_room,
-        'costPerUnit': unit_record.costPerUnit,  # Add this line
-        'waterCost': unit_record.waterCost,      # Add this line
-        'rentCost': unit_record.rentCost,        # Add this line
- 
+        'res_room': unit_record.res_room
     }
 
     return jsonify({'Unit': record_data})
 
 
+# # get record list by date [http://localhost/unit/list/date?page=x&start=%Y-%m-%d&end=%Y-%m-%d]
+# @app.route('/unit/list/date', methods=['GET'])
+# @token_required
+# def get_unit_by_date(current_user, role):
+#     startDate = request.args.get('start', type=toDate)
+#     endDate = request.args.get('end', type=toDate)
 
-# get record list by date [http://localhost/unit/list/date?page=x&start=%Y-%m-%d&end=%Y-%m-%d]
-@app.route('/unit/list/date', methods=['GET'])
-@token_required
-def get_unit_by_date(current_user, role):
-    startDate = request.args.get('start', type=toDate)
-    endDate = request.args.get('end', type=toDate)
+#     # pagination
+#     page = request.args.get('page', 1, type=int)
 
-    # pagination
-    page = request.args.get('page', 1, type=int)
+#     unit_record = Unit.query.filter(and_(Unit.date <= endDate, Unit.date >= startDate)).all()
 
-    unit_record = Unit.query.filter(and_(Unit.date <= endDate, Unit.date >= startDate)).all()
+#     if not unit_record:
+#         return make_response(jsonify({'message': 'The record between the date does not exist'}), 404)
 
-    if not unit_record:
-        return make_response(jsonify({'message': 'The record between the date does not exist'}), 404)
+#     total_record = len(unit_record)
+#     total_pages, item_on_page = pagination(page, unit_record, 5)
 
-    total_record = len(unit_record)
-    total_pages, item_on_page = pagination(page, unit_record, 5)
+#     output = []
+#     for record in item_on_page:
+#         record_data = {
+#             'id': record.id,
+#             'numberOfUnits': record.numberOfUnits,
+#             'prevNumberOfUnits': record.prevNumberOfUnits,
+#             'date': record.date,
+#             'extractionStatus': record.extractionStatus,
+#             'approveStatus': record.approveStatus,
+#             'res_room': record.res_room
+#         }
+#         output.append(record_data)
 
-    output = []
-    for record in item_on_page:
-        record_data = {
-            'id': record.id,
-            'numberOfUnits': record.numberOfUnits,
-            'date': record.date,
-            'extractionStatus': record.extractionStatus,
-            'approveStatus': record.approveStatus,
-            'res_room': record.res_room,
-            'costPerUnit': record.costPerUnit,  # Add this line
-            'waterCost': record.waterCost,      # Add this line
-            'rentCost': record.rentCost,        # Add this line
-          
-        }
-        output.append(record_data)
-
-    if len(output) == 0:
-        return make_response(jsonify({'message': 'There is no record data left!'}), 404)
-    else:
-        page_data = {
-            'total_pages': total_pages,
-            'page': page,
-            'total_record': total_record
-        }
-        output.append(page_data)
-        return jsonify({'Unit': output})
-
+#     if len(output) == 0:
+#         return make_response(jsonify({'message': 'There is no record data left!'}), 404)
+#     else:
+#         page_data = {
+#             'total_pages': total_pages,
+#             'page': page,
+#             'total_record': total_record
+#         }
+#         output.append(page_data)
+#         return jsonify({'Unit': output})
 
 
 # get record list by room number [http://localhost/unit/list/room?page=x&query=x]
@@ -131,14 +122,11 @@ def get_unit_by_room(current_user, role):
         record_data = {
             'id': record.id,
             'numberOfUnits': record.numberOfUnits,
+            'prevNumberOfUnits': record.prevNumberOfUnits,
             'date': record.date,
             'extractionStatus': record.extractionStatus,
             'approveStatus': record.approveStatus,
-            'res_room': record.res_room,
-            'costPerUnit': record.costPerUnit,  # Add this line
-            'waterCost': record.waterCost,      # Add this line
-            'rentCost': record.rentCost,        # Add this line
-       
+            'res_room': record.res_room
         }
         output.append(record_data)
 
@@ -152,7 +140,6 @@ def get_unit_by_room(current_user, role):
         }
         output.append(page_data)
         return jsonify({'Unit': output})
-
 
 
 # get all records with pagination [http://localhost/unit/list]
@@ -176,14 +163,11 @@ def get_units(current_user, role):
         record_data = {
             'id': record.id,
             'numberOfUnits': record.numberOfUnits,
+            'prevNumberOfUnits': record.prevNumberOfUnits,
             'date': record.date,
             'extractionStatus': record.extractionStatus,
             'approveStatus': record.approveStatus,
-            'res_room': record.res_room,
-            'costPerUnit': record.costPerUnit,  # Add this line
-            'waterCost': record.waterCost,      # Add this line
-            'rentCost': record.rentCost,        # Add this line
-       
+            'res_room': record.res_room
         }
         output.append(record_data)
 
@@ -199,7 +183,6 @@ def get_units(current_user, role):
         return jsonify({'Unit': output})
 
 
-
 # deleting a record [http://localhost/unit/del/x]
 @app.route('/unit/del/<rec_id>', methods=['DELETE'])
 @token_required
@@ -210,9 +193,10 @@ def delete_unit(current_user, role, rec_id):
 
     db.session.delete(unit_record)
     db.session.commit()
-    return make_response(jsonify({'message': 'Unit deleted sucessfully!'}), 200)
+    return make_response(jsonify({'message': 'Unit deleted successfully!'}), 200)
 
 
+# update record [http://localhost/unit/edit/x]
 # update record [http://localhost/unit/edit/x]
 @app.route('/unit/edit/<rec_id>', methods=['PUT'])
 @token_required
@@ -225,27 +209,17 @@ def update_unit(current_user, role, rec_id):
         try:
             if 'numberOfUnits' in change_data:
                 unit_record.numberOfUnits = change_data['numberOfUnits']
-            if 'date' in change_data:
-                unit_record.date = toDate(change_data['date'])
-            if 'extractionStatus' in change_data:
-                unit_record.extractionStatus = change_data['extractionStatus']
+            if 'prevNumberOfUnits' in change_data:
+                unit_record.prevNumberOfUnits = change_data['prevNumberOfUnits']
             if 'approveStatus' in change_data:
                 unit_record.approveStatus = change_data['approveStatus']
-            if 'res_room' in change_data:
-                unit_record.res_room = change_data['res_room']
-            if 'costPerUnit' in change_data:  # Add this block
-                unit_record.costPerUnit = change_data['costPerUnit']
-            if 'waterCost' in change_data:    # Add this block
-                unit_record.waterCost = change_data['waterCost']
-            if 'rentCost' in change_data:     # Add this block
-                unit_record.rentCost = change_data['rentCost']
-         
+                unit_record.extractionStatus = 'Succeeded' if change_data['approveStatus'] else 'Failed'
 
             db.session.commit()
             return make_response(jsonify({'message': 'Unit data has been updated'}), 200)
         except Exception as e:
             print(f"Error updating unit: {e}")
-            return make_response(jsonify({"message": "The room that record refer does not exist!"}), 404)
+            return make_response(jsonify({"message": "Error updating unit data!"}), 404)
     else:
         return make_response(jsonify({"message": "There's no unit exists!"}), 404)
 

@@ -4,10 +4,10 @@ import ast
 from sqlalchemy import delete
 from library.main import app, db
 from config import app_config
-from library.model.models import Users, Roles, Resident, UnitHistory
+from library.model.models import Users, Roles, Resident, BillHistory
 from tests.function_for_test.test_function import headerSetUp
 
-class TestUnitHistoryRoutes(unittest.TestCase):
+class TestBillHistoryRoutes(unittest.TestCase):
     def setUp(self):
         self.app = app
         self.app.config.from_object(app_config['testing'])

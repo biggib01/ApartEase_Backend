@@ -23,4 +23,4 @@ mail = Mail(app)
 print(f"Mail server: {app.config['MAIL_SERVER']}, Mail username: {app.config['MAIL_USERNAME']}")
 
 
-from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth, dev_routes, bill_routes, unit_history_routes
+from library.routes import user_routes, role_routes, residents_routes, unit_routes, auth, dev_routes, bill_routes, bill_history_routes

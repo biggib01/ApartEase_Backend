@@ -5,13 +5,11 @@ from library.functions import pagination, toDate
 from flask_mail import Message
 from library.main import mail
 
-
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 # --------------------Bill Management------------------------------#
 
@@ -56,7 +54,7 @@ def send_bill_by_email(current_user, role, bill_id):
     except Exception as e:
         print(f"Error sending email: {e}")
         return make_response(jsonify({'message': 'Failed to send bill', 'error': str(e)}), 500)
-    
+
 
 @app.route('/bill/send_all', methods=['POST'])
 @token_required
@@ -86,7 +84,6 @@ def send_all_bills(current_user, role):
             Date: {bill.date}
             Room: {bill.res_room}
 
-
             Total Bill: ฿{bill.totalBill:.2f}
             Thank you.
             """
@@ -106,30 +103,48 @@ def send_all_bills(current_user, role):
         print(f"Error sending all bills: {e}")
         return make_response(jsonify({'message': 'Failed to send all bills', 'error': str(e)}), 500)
 
-        
+
 # Add a bill [http://localhost/bill/add]
 @app.route('/bill/add', methods=['POST'])
 @token_required
 def create_bill(current_user, role):
     data = request.get_json()
 
+    # Log the received data
+    logger.info(f"Received data: {data}")
+
+    # Check for missing required fields
+    required_fields = ['date_created', 'unit_id', 'amount']
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return jsonify({'message': f'Missing required fields: {", ".join(missing_fields)}'}), 400
+
     try:
+        # Validate data types
+        date_created = toDate(data['date_created'])
+        unit_id = int(data['unit_id'])
+        amount = float(data['amount'])
+
+        # Check if the unit_id exists
+        unit = Unit.query.get(unit_id)
+        if not unit:
+            return jsonify({'message': f'Unit with id {unit_id} does not exist'}), 400
+
         new_bill = Bill(
-            date=toDate(data['date']),
-            res_room=data['res_room'],
-            totalUnit=data['totalUnit'],
-            totalBill=data['totalBill'],
-            waterCost=data.get('waterCost', 0.0),
-            rentCost=data.get('rentCost', 0.0),
-            costPerUnit=data.get('costPerUnit', 0.0)
+            date_created=date_created,
+            unit_id=unit_id,
+            amount=amount
         )
         db.session.add(new_bill)
         db.session.commit()
 
         return make_response(jsonify({'message': 'New bill created'}), 200)
+    except ValueError as ve:
+        logger.error(f"Value error: {ve}")
+        return make_response(jsonify({'message': f'Invalid data type: {ve}'}), 400)
     except Exception as e:
-        print(f"Error creating bill: {e}")
-        return make_response(jsonify({'message': 'Error creating bill'}), 500)
+        logger.error(f"Error creating bill: {e}")
+        return make_response(jsonify({'message': 'Error creating bill', 'error': str(e)}), 500)
 
 
 # Get all bills with pagination [http://localhost/bill/list]
@@ -152,14 +167,9 @@ def get_bills(current_user, role):
     for bill in item_on_page:
         bill_data = {
             'id': bill.id,
-            'date': bill.date,
-            'res_room': bill.res_room,
-            'totalUnit': bill.totalUnit,
-            'totalBill': bill.totalBill,
-            'waterCost': bill.waterCost,
-            'rentCost': bill.rentCost,
-            'costPerUnit': bill.costPerUnit
-            
+            'date_created': bill.date_created,
+            'unit_id': bill.unit_id,
+            'amount': bill.amount
         }
         output.append(bill_data)
 
@@ -195,13 +205,9 @@ def get_bills_by_room(current_user, role):
     for bill in item_on_page:
         bill_data = {
             'id': bill.id,
-            'date': bill.date,
-            'res_room': bill.res_room,
-            'totalUnit': bill.totalUnit,
-            'totalBill': bill.totalBill,
-            'waterCost': bill.waterCost,
-            'rentCost': bill.rentCost,
-            'costPerUnit': bill.costPerUnit
+            'date_created': bill.date_created,
+            'unit_id': bill.unit_id,
+            'amount': bill.amount
         }
         output.append(bill_data)
 
@@ -215,6 +221,7 @@ def get_bills_by_room(current_user, role):
         }
         output.append(page_data)
         return jsonify({'Bills': output})
+
 
 # Delete a bill by id [http://localhost/bill/del/<bill_id>]
 @app.route('/bill/del/<bill_id>', methods=['DELETE'])
@@ -244,21 +251,12 @@ def update_bill(current_user, role, bill_id):
 
     try:
         # Update the bill details
-        if 'date' in data:
-            bill.date = toDate(data['date'])
-        if 'res_room' in data:
-            bill.res_room = data['res_room']
-        if 'totalUnit' in data:
-            bill.totalUnit = data['totalUnit']
-        if 'totalBill' in data:
-            bill.totalBill = data['totalBill']
-        if 'waterCost' in data:
-            bill.waterCost = data['waterCost']
-        if 'rentCost' in data:
-            bill.rentCost = data['rentCost']
-        if 'costPerUnit' in data:
-            bill.costPerUnit = data['costPerUnit']
-
+        if 'date_created' in data:
+            bill.date_created = toDate(data['date_created'])
+        if 'unit_id' in data:
+            bill.unit_id = data['unit_id']
+        if 'amount' in data:
+            bill.amount = data['amount']
 
         db.session.commit()
 
