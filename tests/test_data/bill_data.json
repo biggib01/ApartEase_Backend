@@ -1,7 +1,14 @@
-{
-    "amount": 1000.0,
-    "date": "2024-06-13",
-    "res_room": "101",
-    "totalUnit": 100,
-    "totalBill": 500.0
-}
+[
+    {
+        "unit_id": 1,
+        "amount": 1500.75,
+        "date_created": "2024-08-13",
+        "res_room": "101"
+    },
+    {
+        "unit_id": 2,
+        "amount": 2000.50,
+        "date_created": "2024-09-13",
+        "res_room": "102"
+    }
+]

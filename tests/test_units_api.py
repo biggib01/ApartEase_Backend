@@ -35,26 +35,16 @@ class TestUnitCRUD(unittest.TestCase):
             user = Users(username='user', password=generate_password_hash('user', method='sha256'))
             admin = Users(username='admin', password=generate_password_hash('admin', method='sha256'))
 
+            unit1 = Unit(numberOfUnits='1001', prevNumberOfUnits='900', date='2024-08-13', extractionStatus='Succeeded', approveStatus=True, res_room='101')
+            unit2 = Unit(numberOfUnits='1100', prevNumberOfUnits='1001', date='2024-09-13', extractionStatus='Succeeded', approveStatus=True, res_room='102')
+
             user.roles.append(role_user)
             admin.roles.append(role_admin)
 
             db.session.add(user)
             db.session.add(admin)
-
-            # Load unit data from JSON file
-            with open('tests/test_data/unit_data.json') as f:
-                unit_data = json.load(f)
-                for unit in unit_data:
-                    new_unit = Unit(
-                        numberOfUnits=unit['numberOfUnits'],
-                        prevNumberOfUnits=unit['prevNumberOfUnits'],
-                        date=unit['date'],
-                        extractionStatus=unit['extractionStatus'],
-                        approveStatus=unit['approveStatus'],
-                        res_room=unit['res_room']
-                    )
-                    db.session.add(new_unit)
-
+            db.session.add(unit1)
+            db.session.add(unit2)
             db.session.commit()
 
     def test_user_logged_in_user_can_add_unit(self):

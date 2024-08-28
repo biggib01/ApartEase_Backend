@@ -1,10 +1,18 @@
-{
-    "numberOfUnits": "1001",
-    "date": "2024-06-13",
-    "extractionStatus": "2001",
-    "approveStatus": false,
-    "res_room": "101",
-    "costPerUnit": 5.0,
-    "waterCost": 10.0,
-    "rentCost": 500.0
-}
+[
+    {
+        "numberOfUnits": "1001",
+        "prevNumberOfUnits": "900",
+        "date": "2024-08-13T00:00:00",
+        "extractionStatus": "Succeeded",
+        "approveStatus": true,
+        "res_room": "101"
+    },
+    {
+        "numberOfUnits": "1100",
+        "prevNumberOfUnits": "1001",
+        "date": "2024-09-13T00:00:00",
+        "extractionStatus": "Succeeded",
+        "approveStatus": true,
+        "res_room": "102"
+    }
+]
