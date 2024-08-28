@@ -38,7 +38,7 @@ class ConfigSL(object):
 class TestingConfig(ConfigSL):
     # ...
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'test_api.db')
+        'postgresql://postgres:1234@localhost:5432/test'
     TESTING = True
 class StagingConfig(ConfigSL):
     # ...

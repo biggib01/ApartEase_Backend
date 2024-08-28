@@ -41,42 +41,23 @@ class TestBillCRUD(unittest.TestCase):
             db.session.add(user)
             db.session.add(admin)
 
-            # Load unit data from JSON file
-            with open('tests/test_data/unit_data.json') as f:
-                unit_data = json.load(f)
-                for unit in unit_data:
-                    new_unit = Unit(
-                        numberOfUnits=unit['numberOfUnits'],
-                        prevNumberOfUnits=unit['prevNumberOfUnits'],
-                        date=unit['date'],
-                        extractionStatus=unit['extractionStatus'],
-                        approveStatus=unit['approveStatus'],
-                        res_room=unit['res_room']
-                    )
-                    db.session.add(new_unit)
+            unit1 = Unit(numberOfUnits='1001', prevNumberOfUnits='900', date='2024-08-13', extractionStatus='Succeeded',
+                         approveStatus=True, res_room='101')
+            unit2 = Unit(numberOfUnits='1100', prevNumberOfUnits='1001', date='2024-09-13',
+                         extractionStatus='Succeeded', approveStatus=True, res_room='102')
 
-            # Load resident data from JSON file
-            with open('tests/test_data/resident_data.json') as f:
-                resident_data = json.load(f)
-                for resident in resident_data:
-                    new_resident = Resident(
-                        name=resident['name'],
-                        lineId=resident['lineId'],
-                        roomNumber=resident['roomNumber']
-                    )
-                    db.session.add(new_resident)
+            res1 = Resident(name='supachok jrirarojkul', lineId='line1', roomNumber='101')
+            res2 = Resident(name='puwadee pleumpiti', lineId='line2', roomNumber='102')
 
-            # Load bill data from JSON file
-            with open('tests/test_data/bill_data.json') as f:
-                bill_data = json.load(f)
-                for bill in bill_data:
-                    new_bill = Bill(
-                        unit_id=bill['unit_id'],
-                        amount=bill['amount'],
-                        date_created=bill['date_created'],
-                        res_room=bill['res_room']
-                    )
-                    db.session.add(new_bill)
+            bill1 = Bill(unit_id=1, amount= 1500.75, date_created= "2024-08-13", res_room= "101")
+            bill2 = Bill(unit_id=2, amount=2000.50, date_created="2024-09-13", res_room="102")
+
+            db.session.add(unit1)
+            db.session.add(unit2)
+            db.session.add(res1)
+            db.session.add(res2)
+            db.session.add(bill1)
+            db.session.add(bill2)
 
             db.session.commit()
 

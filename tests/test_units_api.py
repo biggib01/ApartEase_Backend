@@ -6,7 +6,7 @@ from sqlalchemy import delete
 from werkzeug.security import generate_password_hash
 from library.main import app, db
 from config import app_config
-from library.model.models import Users, Roles, Unit
+from library.model.models import Users, Roles, Unit, Resident
 from tests.function_for_test.test_function import headerSetUp
 
 class TestUnitCRUD(unittest.TestCase):
@@ -38,11 +38,16 @@ class TestUnitCRUD(unittest.TestCase):
             unit1 = Unit(numberOfUnits='1001', prevNumberOfUnits='900', date='2024-08-13', extractionStatus='Succeeded', approveStatus=True, res_room='101')
             unit2 = Unit(numberOfUnits='1100', prevNumberOfUnits='1001', date='2024-09-13', extractionStatus='Succeeded', approveStatus=True, res_room='102')
 
+            res1 = Resident(name='supachok jrirarojkul', lineId='line1', roomNumber='101')
+            res2 = Resident(name='puwadee pleumpiti', lineId='line2', roomNumber='102')
+
             user.roles.append(role_user)
             admin.roles.append(role_admin)
 
             db.session.add(user)
             db.session.add(admin)
+            db.session.add(res1)
+            db.session.add(res2)
             db.session.add(unit1)
             db.session.add(unit2)
             db.session.commit()
@@ -52,7 +57,7 @@ class TestUnitCRUD(unittest.TestCase):
         new_unit_data = json.dumps({
             "approveStatus": True,
             "numberOfUnits": "1200",
-            "res_room": "103"
+            "res_room": "101"
         })
         add_unit = self.client().post('/unit/add', data=new_unit_data, content_type="application/json", headers=headers)
         self.assertEqual(add_unit.status_code, 200)
@@ -62,9 +67,30 @@ class TestUnitCRUD(unittest.TestCase):
     def test_user_logged_in_user_can_get_unit_by_id(self):
         headers = headerSetUp(self, 1, self.user_details)
         fetch_unit = self.client().get('/unit/list/1', content_type="application/json", headers=headers)
+
         self.assertEqual(fetch_unit.status_code, 200)
-        response = fetch_unit.data.decode()
-        self.assertIn('Unit', ast.literal_eval(response))
+
+        expected_result = {
+            'Unit':
+            {
+                    'approveStatus': True,
+                    'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
+                    'extractionStatus': 'Succeeded',
+                    'id': 1,
+                    'numberOfUnits': '1001',
+                    'prevNumberOfUnits': '900',
+                    'res_room': '101'
+            }
+        }
+
+        response = fetch_unit.get_json()
+
+        self.assertEqual(response, expected_result)
+
+        # Additionally, verify that the 'approveStatus' key exists and is a boolean
+        unit = response.get('Unit', {})
+        self.assertIn('approveStatus', unit)
+        self.assertIsInstance(unit['approveStatus'], bool)
 
     def test_user_logged_in_user_cannot_get_nonexistent_unit_by_id(self):
         headers = headerSetUp(self, 1, self.user_details)
@@ -76,9 +102,37 @@ class TestUnitCRUD(unittest.TestCase):
     def test_user_logged_in_user_can_get_units_by_room(self):
         headers = headerSetUp(self, 1, self.user_details)
         fetch_units = self.client().get('/unit/list/room?query=101&page=1', content_type="application/json", headers=headers)
+
         self.assertEqual(fetch_units.status_code, 200)
-        response = fetch_units.data.decode()
-        self.assertIn('Unit', ast.literal_eval(response))
+
+        expected_result = {
+            "Unit": [
+        {
+            "approveStatus": True,
+            "date": "Tue, 13 Aug 2024 00:00:00 GMT",
+            "extractionStatus": "Succeeded",
+            "id": 1,
+            "numberOfUnits": "1001",
+            "prevNumberOfUnits": "900",
+            "res_room": "101"
+        },
+        {
+            "page": 1,
+            "total_pages": 1,
+            "total_record": 1
+        }
+    ]
+}
+
+        response = fetch_units.get_json()
+
+        self.assertEqual(response, expected_result)
+
+        # Additionally, verify that each unit contains the 'approveStatus' key and that it is a boolean
+        units = response.get('Unit', [])
+        for unit in units:
+            if 'approveStatus' in unit:
+                self.assertIsInstance(unit['approveStatus'], bool)  # Ensure 'approveStatus' is a boolean (True/False)
 
     def test_user_logged_in_user_cannot_get_units_by_nonexistent_room(self):
         headers = headerSetUp(self, 1, self.user_details)
@@ -91,8 +145,44 @@ class TestUnitCRUD(unittest.TestCase):
         headers = headerSetUp(self, 1, self.user_details)
         fetch_units = self.client().get('/unit/list?page=1', content_type="application/json", headers=headers)
         self.assertEqual(fetch_units.status_code, 200)
-        response = fetch_units.data.decode()
-        self.assertIn('Unit', ast.literal_eval(response))
+
+        expected_result = {
+            'Unit': [
+                {
+                    'approveStatus': True,
+                    'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
+                    'extractionStatus': 'Succeeded',
+                    'id': 1,
+                    'numberOfUnits': '1001',
+                    'prevNumberOfUnits': '900',
+                    'res_room': '101'
+                },
+                {
+                    'approveStatus': True,
+                    'date': 'Fri, 13 Sep 2024 00:00:00 GMT',
+                    'extractionStatus': 'Succeeded',
+                    'id': 2,
+                    'numberOfUnits': '1100',
+                    'prevNumberOfUnits': '1001',
+                    'res_room': '102'
+                },
+                {
+                    'page': 1,
+                    'total_pages': 1,
+                    'total_record': 2
+                }
+            ]
+        }
+
+        response = fetch_units.get_json()
+
+        self.assertEqual(response, expected_result)
+
+        # Additionally, verify that each unit contains the 'approveStatus' key and that it is a boolean
+        units = response.get('Unit', [])
+        for unit in units:
+            if 'approveStatus' in unit:
+                self.assertIsInstance(unit['approveStatus'], bool)  # Ensure 'approveStatus' is a boolean (True/False)
 
     def test_user_logged_in_user_can_update_unit(self):
         headers = headerSetUp(self, 1, self.user_details)
