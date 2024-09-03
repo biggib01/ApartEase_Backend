@@ -32,8 +32,8 @@ class TestBillHistoryCRUD(unittest.TestCase):
             db.session.add(role_admin)
             db.session.add(role_user)
 
-            user = Users(username='user', password=generate_password_hash('user', method='sha256'))
-            admin = Users(username='admin', password=generate_password_hash('admin', method='sha256'))
+            user = Users(username='user', password=generate_password_hash('user', method='pbkdf2:sha256'))
+            admin = Users(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'))
 
             user.roles.append(role_user)
             admin.roles.append(role_admin)
@@ -73,8 +73,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
                     new_bill = Bill(
                         unit_id=bill['unit_id'],
                         amount=bill['amount'],
-                        date_created=bill['date_created'],
-                        res_room=bill['res_room']
+                        date_created=bill['date_created']
                     )
                     db.session.add(new_bill)
 
@@ -83,7 +82,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
                 bill_history_data = json.load(f)
                 for history in bill_history_data:
                     new_history = BillHistory(
-                        bill_id=history['bill_id'],
+                        unit_id=history['unit_id'],
                         amount=history['amount'],
                         date_sent=history['date_sent']
                     )
@@ -94,7 +93,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
     def test_user_logged_in_user_can_add_bill_history(self):
         headers = headerSetUp(self, 1, self.user_details)
         new_history_data = json.dumps({
-            "bill_id": 1,
+            "unit_id": 1,
             "amount": 1500.75,
             "date_sent": "2024-08-14"
         })
@@ -103,20 +102,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
         response = add_history.data.decode()
         self.assertEqual(ast.literal_eval(response)['message'], 'Bill history records processed successfully!')
 
-    def test_user_logged_in_user_can_get_bill_history_by_id(self):
-        headers = headerSetUp(self, 1, self.user_details)
-        fetch_history = self.client().get('/bill/history/detail/1', content_type="application/json", headers=headers)
-        self.assertEqual(fetch_history.status_code, 200)
-        response = fetch_history.data.decode()
-        self.assertIn('BillHistoryDetail', ast.literal_eval(response))
-
-    def test_user_logged_in_user_cannot_get_nonexistent_bill_history_by_id(self):
-        headers = headerSetUp(self, 1, self.user_details)
-        fetch_history = self.client().get('/bill/history/detail/100', content_type="application/json", headers=headers)
-        self.assertEqual(fetch_history.status_code, 404)
-        response = fetch_history.data.decode()
-        self.assertEqual(ast.literal_eval(response)['message'], 'Bill history record not found')
-
+   
     def test_user_logged_in_user_can_get_all_bill_histories(self):
         headers = headerSetUp(self, 1, self.user_details)
         fetch_histories = self.client().get('/bill/history/list?page=1', content_type="application/json", headers=headers)

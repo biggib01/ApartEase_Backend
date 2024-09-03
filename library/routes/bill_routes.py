@@ -215,6 +215,24 @@ def get_bills(current_user, role):
         return jsonify({'Bills': output})
 
 
+# Add this route to fetch a bill by ID
+@app.route('/bill/list/<int:bill_id>', methods=['GET'])
+@token_required
+def get_bill_by_id(current_user, role, bill_id):
+    bill = Bill.query.get(bill_id)
+    if not bill:
+        return make_response(jsonify({'message': 'Bill does not exist'}), 404)
+
+    bill_data = {
+        'id': bill.id,
+        'date_created': bill.date_created,
+        'unit_id': bill.unit_id,
+        'amount': bill.amount,
+        'res_room': bill.res_room  # Include resident room number
+    }
+    return jsonify({'Bill': bill_data})
+
+
 # Get bills by room number [http://localhost/bill/list/room?query=x&page=x]
 @app.route('/bill/list/room', methods=['GET'])
 @token_required
@@ -222,36 +240,28 @@ def get_bills_by_room(current_user, role):
     query = request.args.get('query', type=str)
     page = request.args.get('page', 1, type=int)
 
-    bills = Bill.query.filter(Bill.res_room.like(query)).all()
+    bills = Bill.query.join(Unit).filter(Unit.res_room.like(query)).paginate(page=page, per_page=10)
 
-    if not bills:
-        return make_response(jsonify({'message': 'No bills found for the specified room'}), 404)
+    if not bills.items:
+        return jsonify({'message': 'No bills found for the specified room'}), 404
 
-    total_bills = len(bills)
-
-    total_pages, item_on_page = pagination(page, bills, 5)
-
-    output = []
-    for bill in item_on_page:
+    result = []
+    for bill in bills.items:
         bill_data = {
             'id': bill.id,
-            'date_created': bill.date_created,
             'unit_id': bill.unit_id,
             'amount': bill.amount,
-            'res_room': bill.res_room  # Include resident room number
+            'date_created': bill.date_created,
+            'res_room': bill.unit.res_room
         }
-        output.append(bill_data)
+        result.append(bill_data)
 
-    if len(output) == 0:
-        return make_response(jsonify({'message': 'There are no bills left!'}), 404)
-    else:
-        page_data = {
-            'total_pages': total_pages,
-            'page': page,
-            'total_bills': total_bills
-        }
-        output.append(page_data)
-        return jsonify({'Bills': output})
+    return jsonify({
+        'Bills': result,
+        'total_pages': bills.pages,
+        'page': bills.page,
+        'total_bills': bills.total
+    })
 
 
 # Delete a bill by id [http://localhost/bill/del/<bill_id>]

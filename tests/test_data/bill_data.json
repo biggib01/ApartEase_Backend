@@ -2,13 +2,11 @@
     {
         "unit_id": 1,
         "amount": 1500.75,
-        "date_created": "2024-08-13",
-        "res_room": "101"
+        "date_created": "2024-08-13"
     },
     {
         "unit_id": 2,
         "amount": 2000.50,
-        "date_created": "2024-09-13",
-        "res_room": "102"
+        "date_created": "2024-09-13"
     }
 ]

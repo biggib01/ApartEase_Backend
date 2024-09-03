@@ -26,6 +26,10 @@ class TestRoleCRUD(unittest.TestCase):
             'username': 'user'
         })
 
+        # Push an application context
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+
         with self.app.app_context():
             db.session.close()
             db.drop_all()
@@ -37,8 +41,8 @@ class TestRoleCRUD(unittest.TestCase):
             db.session.add(role_admin)
             db.session.add(role_user)
 
-            user = Users(username='user', password=generate_password_hash('user', method='sha256'))
-            admin = Users(username='admin', password=generate_password_hash('admin', method='sha256'))
+            user = Users(username='user', password=generate_password_hash('user', method='pbkdf2:sha256'))
+            admin = Users(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'))
 
             res1 = Resident(name='supachok jrirarojkul', lineId='line1', roomNumber='101')
 
@@ -49,6 +53,11 @@ class TestRoleCRUD(unittest.TestCase):
             db.session.add(admin)
             db.session.add(res1)
             db.session.commit()
+
+    def tearDown(self):
+        # Pop the application context
+        self.app_context.pop()
+
 
     def test_user_role_admin_logged_in_user_can_add_role(self):
         headers = headerSetUp(self, 1, self.admin_details)

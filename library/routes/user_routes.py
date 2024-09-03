@@ -15,7 +15,7 @@ def create_user(current_user, role):
         return make_response(jsonify({'message': 'access denied'}), 401)
 
     data = request.get_json()
-    hashed_password = generate_password_hash(data['password'], method='sha256')
+    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
     role_name = data['role']
 
     user = Users.query.filter_by(username=data['username']).first()
@@ -64,7 +64,7 @@ def edit_user(current_user, role, uid):
                 user.username = change_username
 
             if change_password:
-                user.password = generate_password_hash(change_password, method='sha256')
+                user.password = generate_password_hash(change_password, method='pbkdf2:sha256')
 
             if change_role:
                 role = Roles.query.filter_by(name=change_role).first()

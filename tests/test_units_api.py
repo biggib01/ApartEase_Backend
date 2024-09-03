@@ -21,6 +21,10 @@ class TestUnitCRUD(unittest.TestCase):
             'username': 'user'
         })
 
+        # Push an application context
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+
         with self.app.app_context():
             db.session.close()
             db.drop_all()
@@ -32,8 +36,8 @@ class TestUnitCRUD(unittest.TestCase):
             db.session.add(role_admin)
             db.session.add(role_user)
 
-            user = Users(username='user', password=generate_password_hash('user', method='sha256'))
-            admin = Users(username='admin', password=generate_password_hash('admin', method='sha256'))
+            user = Users(username='user', password=generate_password_hash('user', method='pbkdf2:sha256'))
+            admin = Users(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'))
 
             unit1 = Unit(numberOfUnits='1001', prevNumberOfUnits='900', date='2024-08-13', extractionStatus='Succeeded', approveStatus=True, res_room='101')
             unit2 = Unit(numberOfUnits='1100', prevNumberOfUnits='1001', date='2024-09-13', extractionStatus='Succeeded', approveStatus=True, res_room='102')
@@ -51,6 +55,11 @@ class TestUnitCRUD(unittest.TestCase):
             db.session.add(unit1)
             db.session.add(unit2)
             db.session.commit()
+
+    def tearDown(self):
+        # Pop the application context
+        self.app_context.pop()
+
 
     def test_user_logged_in_user_can_add_unit(self):
         headers = headerSetUp(self, 1, self.user_details)

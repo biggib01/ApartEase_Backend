@@ -17,6 +17,7 @@ uuid = "*"
 Flask-Migrate = "*"
 pytest = "*"
 gunicorn = "*"
+flask-mail = "*"
 
 [dev-packages]
 

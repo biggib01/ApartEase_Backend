@@ -70,6 +70,9 @@ class Unit(db.Model):
         """Update the previous month's units with the current month's units."""
         self.prevNumberOfUnits = self.numberOfUnits
 
+    def __repr__(self):
+        return f'<Unit "{self.id}">'    
+
 
 class Bill(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -98,6 +101,7 @@ class Bill(db.Model):
 
     def send_bill(self):
         """Mark the bill as sent and move it to the BillHistory table."""
+        from datetime import date
         self.is_sent = True
         bill_history = BillHistory(
             unit_id=self.unit_id,
@@ -158,7 +162,10 @@ def token_required(f):
 
 
 
-db.create_all()
+# db.create_all()
+# Ensure the application context is pushed before creating all tables
+with app.app_context():
+    db.create_all()
 
 
 listen(Resident, 'after_insert', update_search_vector)

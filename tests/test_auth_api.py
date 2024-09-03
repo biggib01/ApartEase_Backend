@@ -36,8 +36,8 @@ class TestAuth(unittest.TestCase):
             db.session.add(role_admin)
             db.session.add(role_user)
 
-            user = Users(username='user', password=generate_password_hash('user', method='sha256'))
-            admin = Users(username='admin', password=generate_password_hash('admin', method='sha256'))
+            user = Users(username='user', password=generate_password_hash('user', method='pbkdf2:sha256'))
+            admin = Users(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'))
 
             user.roles.append(role_user)
             admin.roles.append(role_admin)

@@ -21,6 +21,10 @@ class TestResidentCRUD(unittest.TestCase):
             'username': 'user'
         })
 
+        # Push an application context
+        self.app_context = self.app.app_context()
+        self.app_context.push()
+
         with self.app.app_context():
             db.session.close()
             db.drop_all()
@@ -32,8 +36,8 @@ class TestResidentCRUD(unittest.TestCase):
             db.session.add(role_admin)
             db.session.add(role_user)
 
-            user = Users(username='user', password=generate_password_hash('user', method='sha256'))
-            admin = Users(username='admin', password=generate_password_hash('admin', method='sha256'))
+            user = Users(username='user', password=generate_password_hash('user', method='pbkdf2:sha256'))
+            admin = Users(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'))
 
             res1 = Resident(name='supachok jrirarojkul', lineId='line1', roomNumber='101')
             res2 = Resident(name='puwadee pleumpiti', lineId='line2', roomNumber='102')
@@ -46,6 +50,11 @@ class TestResidentCRUD(unittest.TestCase):
             db.session.add(res1)
             db.session.add(res2)
             db.session.commit()
+
+    def tearDown(self):
+        # Pop the application context
+        self.app_context.pop()
+
 
     def test_user_logged_in_user_can_add_resident(self):
         headers = headerSetUp(self, 1, self.user_details)

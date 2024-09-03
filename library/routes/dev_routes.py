@@ -10,7 +10,7 @@ from library.model.models import Users, token_required, Roles
 def dev_create_user():
 
     data = request.get_json()
-    hashed_password = generate_password_hash(data['password'], method='sha256')
+    hashed_password = generate_password_hash(data['password'], method='pbkdf2:sha256')
     role_name = data['role']
 
     user = Users.query.filter_by(username=data['username']).first()

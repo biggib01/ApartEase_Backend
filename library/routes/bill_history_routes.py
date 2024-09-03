@@ -196,7 +196,7 @@ def delete_all_bill_history(current_user, role):
         return make_response(jsonify({'message': 'Error deleting all bill history records', 'error': str(e)}), 500)    
 
 
-@app.route('/bill/history/detail/<int:id>', methods=['GET'])
+@app.route('/bill/history/<int:id>', methods=['GET'])
 @token_required
 def get_bill_history_detail(current_user, role, id):
     try:
