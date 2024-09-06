@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Success</title>
+</head>
+<body>
+    <h1>Upload Successful</h1>
+    <ul>
+        {% for file_name in file_names %}
+        <li>{{ file_name }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('index') }}">Upload more images</a>
+</body>
+</html>

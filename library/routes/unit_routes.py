@@ -1,23 +1,28 @@
+import os
 from operator import and_
 from flask import request, jsonify, make_response
 import datetime as date
 from library.main import db, app
 from library.model.models import token_required, Unit
 from library.functions import toDate, pagination
+from azblobexplorer import AzureBlobDelete
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # --------------------Unit Record management------------------------------#
 
 # add a unit, [http://localhost/unit/add]
 @app.route('/unit/add', methods=['POST'])
-@token_required
-def create_or_update_unit(current_user, role):
+def create_or_update_unit():
     data = request.get_json()
 
     try:
-        approve_status = data['approveStatus']
-        extraction_status = 'Succeeded' if approve_status else 'Failed'
+        extraction_status = data['extractionStatus']
+        approve_status = True if extraction_status == 'Fully successful' else False if extraction_status == 'Not fully successful' else False
         res_room = data['res_room']
         number_of_units = data['numberOfUnits']
+        imgUrl = data['imgUrl']
 
         # Check if a unit record already exists for the given room number
         existing_unit = Unit.query.filter_by(res_room=res_room).first()
@@ -28,6 +33,7 @@ def create_or_update_unit(current_user, role):
             existing_unit.numberOfUnits = number_of_units
             existing_unit.date = date.datetime.now()
             existing_unit.extractionStatus = extraction_status
+            existing_unit.imgUrl = imgUrl
             existing_unit.approveStatus = approve_status
         else:
             # Create a new unit record with prevNumberOfUnits set to 0
@@ -37,6 +43,7 @@ def create_or_update_unit(current_user, role):
                 date=date.datetime.now(),
                 extractionStatus=extraction_status,
                 approveStatus=approve_status,
+                imgUrl=imgUrl,
                 res_room=res_room
             )
             db.session.add(new_unitRecord)
@@ -67,6 +74,7 @@ def get_unit(current_user, role, unit_id):
         'date': unit_record.date,
         'extractionStatus': unit_record.extractionStatus,
         'approveStatus': unit_record.approveStatus,
+        'imgUrl': unit_record.imgUrl,
         'res_room': unit_record.res_room
     }
 
@@ -142,6 +150,7 @@ def get_unit_by_room(current_user, role):
             'date': record.date,
             'extractionStatus': record.extractionStatus,
             'approveStatus': record.approveStatus,
+            'imgUrl': record.imgUrl,
             'res_room': record.res_room
         }
         output.append(record_data)
@@ -183,6 +192,7 @@ def get_units(current_user, role):
             'date': record.date,
             'extractionStatus': record.extractionStatus,
             'approveStatus': record.approveStatus,
+            'imgUrl': record.imgUrl,
             'res_room': record.res_room
         }
         output.append(record_data)
@@ -207,6 +217,20 @@ def delete_unit(current_user, role, rec_id):
     if not unit_record:
         return make_response(jsonify({'message': 'Unit does not exist'}), 404)
 
+    accountName = os.getenv('AZURE_ACCOUNT_NAME')
+    accountKey = os.getenv('AZURE_ACCOUNT_KEY')
+    containerName = os.getenv('CONTAINER_NAME')
+
+    az = AzureBlobDelete(accountName, accountKey, containerName)
+
+    url = unit_record.imgUrl
+
+    filename = url.rsplit('/', 1)[-1]
+    print(filename)
+
+    az.delete_file(filename)
+
+
     db.session.delete(unit_record)
     db.session.commit()
     return make_response(jsonify({'message': 'Unit deleted successfully!'}), 200)
@@ -224,11 +248,18 @@ def update_unit(current_user, role, rec_id):
         try:
             if 'numberOfUnits' in change_data:
                 # Copy current numberOfUnits to prevNumberOfUnits before updating
-                unit_record.prevNumberOfUnits = unit_record.numberOfUnits
                 unit_record.numberOfUnits = change_data['numberOfUnits']
-            if 'approveStatus' in change_data:
-                unit_record.approveStatus = change_data['approveStatus']
-                unit_record.extractionStatus = 'Succeeded' if change_data['approveStatus'] else 'Failed'
+            if 'extractionStatus' in change_data:
+                unit_record.extractionStatus = change_data['extractionStatus']
+                unit_record.approveStatus = True if unit_record.extractionStatus == 'Fully successful' else False if unit_record.extractionStatus == 'Not fully successful' else False
+            if 'prevNumberOfUnits' in change_data:
+                unit_record.prevNumberOfUnits = change_data['prevNumberOfUnits']
+            if 'date' in change_data:
+                unit_record.date = change_data['date']
+            if 'imgUrl' in change_data:
+                unit_record.imgUrl = change_data['imgUrl']
+            if 'res_room' in change_data:
+                unit_record.res_room = change_data['res_room']
 
             db.session.commit()
             return make_response(jsonify({'message': 'Unit data has been updated'}), 200)

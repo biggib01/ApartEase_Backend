@@ -57,6 +57,7 @@ class Unit(db.Model):
     prevNumberOfUnits = db.Column(db.String)
     date = db.Column(db.Date)
     extractionStatus = db.Column(db.String)
+    imgUrl = db.Column(db.String)
     approveStatus = db.Column(db.Boolean)
     res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
 

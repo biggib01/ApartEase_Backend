@@ -7,7 +7,7 @@ class ConfigPG(object):
     # ...
     # connect route to your database here
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:1234@localhost:5432/test'
+        'postgresql://postgres:1234@localhost:5647/test'
         # set up postgresql database first then input the required parameter in "{}"
         # postgresql://{user name}:{password}@{url}:{port}/{db name}
     SQLALCHEMY_TRACK_MODIFICATIONS = True
@@ -38,7 +38,7 @@ class ConfigSL(object):
 class TestingConfig(ConfigSL):
     # ...
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:1234@localhost:5432/test'
+        'postgresql://postgres:1234@localhost:5647/test2'
     TESTING = True
 class StagingConfig(ConfigSL):
     # ...

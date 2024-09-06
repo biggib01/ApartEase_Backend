@@ -18,6 +18,8 @@ Flask-Migrate = "*"
 pytest = "*"
 gunicorn = "*"
 flask-mail = "*"
+azure-storage-blob = "*"
+azblobexplorer = "*"
 
 [dev-packages]
 

@@ -1,2 +1,4 @@
 library/template.py
 library/template2.py
+.env
+uploads
