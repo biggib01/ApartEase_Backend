@@ -32,15 +32,27 @@ def add_bill_history(current_user, role):
             if not unit:
                 return jsonify({'message': f'The specified unit_id {record["unit_id"]} does not exist in the Unit table'}), 400
 
+            resident = Resident.query.filter_by(roomNumber=unit.res_room).first()
+
             # Check if a bill history record already exists for the given unit_id and date_sent
             existing_history = BillHistory.query.filter_by(unit_id=record['unit_id'], date_sent=toDate(record['date_sent'])).first()
             if existing_history:
                 existing_history.amount = record['amount']
+                existing_history.roomNumber = unit.res_room
+                existing_history.residentName = resident.name if resident else None
+                existing_history.residentEmail = resident.email if resident else None
+                existing_history.currentNumberOfUnits = unit.numberOfUnits
+                existing_history.previousNumberOfUnits = unit.prevNumberOfUnits
             else:
                 new_history = BillHistory(
                     unit_id=record['unit_id'],
                     amount=record['amount'],
-                    date_sent=toDate(record['date_sent'])
+                    date_sent=toDate(record['date_sent']),
+                    roomNumber=unit.res_room,
+                    residentName=resident.name if resident else None,
+                    residentEmail=resident.email if resident else None,
+                    currentNumberOfUnits=unit.numberOfUnits,
+                    previousNumberOfUnits=unit.prevNumberOfUnits
                 )
                 db.session.add(new_history)
 
@@ -52,10 +64,6 @@ def add_bill_history(current_user, role):
     except Exception as e:
         print(f"Error adding bill history: {e}")  # Log the error
         return jsonify({'message': f'Error adding bill history: {str(e)}'}), 400
-
-
-
-
 
 
 @app.route('/bill/history/list', methods=['GET'])
@@ -80,7 +88,11 @@ def get_bill_history(current_user, role):
             'unit_id': record.unit_id,
             'amount': record.amount,
             'date_sent': record.date_sent,
-            'res_room': record.res_room  # Include the room number
+            'res_room': record.res_room,  # Include the room number
+            'residentName': record.residentName,  # Include the resident name
+            'residentEmail': record.residentEmail,  # Include the resident email
+            'currentNumberOfUnits': record.currentNumberOfUnits,  # Include the current number of units
+            'previousNumberOfUnits': record.previousNumberOfUnits  # Include the previous number of units
         }
         output.append(record_data)
 
@@ -94,7 +106,6 @@ def get_bill_history(current_user, role):
         }
         output.append(page_data)
         return jsonify({'BillHistory': output})
-
 
 
 @app.route('/bill/history/date', methods=['GET'])
@@ -120,7 +131,12 @@ def get_bill_history_by_date(current_user, role):
             'id': record.id,
             'unit_id': record.unit_id,
             'amount': record.amount,
-            'date_sent': record.date_sent
+            'date_sent': record.date_sent,
+            'res_room': record.res_room,  # Include the room number
+            'residentName': record.residentName,  # Include the resident name
+            'residentEmail': record.residentEmail,  # Include the resident email
+            'currentNumberOfUnits': record.currentNumberOfUnits,  # Include the current number of units
+            'previousNumberOfUnits': record.previousNumberOfUnits  # Include the previous number of units
         }
         output.append(record_data)
 
@@ -149,13 +165,17 @@ def update_bill_history(current_user, role, id):
 
         bill_history.amount = data.get('amount', bill_history.amount)
         bill_history.date_sent = toDate(data.get('date_sent', bill_history.date_sent))
+        bill_history.roomNumber = data.get('roomNumber', bill_history.roomNumber)
+        bill_history.residentName = data.get('residentName', bill_history.residentName)
+        bill_history.residentEmail = data.get('residentEmail', bill_history.residentEmail)
+        bill_history.currentNumberOfUnits = data.get('currentNumberOfUnits', bill_history.currentNumberOfUnits)
+        bill_history.previousNumberOfUnits = data.get('previousNumberOfUnits', bill_history.previousNumberOfUnits)
 
         db.session.commit()
         return jsonify({'message': 'Bill history record updated successfully!'})
     except Exception as e:
         print(f"Error updating bill history: {e}")  # Log the error
         return jsonify({'message': 'Error updating bill history'}), 500
-
 
 
 @app.route('/bill/history/del/<int:id>', methods=['DELETE'])
@@ -172,7 +192,6 @@ def delete_bill_history(current_user, role, id):
     except Exception as e:
         print(f"Error deleting bill history: {e}")  # Log the error
         return jsonify({'message': 'Error deleting bill history'}), 500
-    
 
 
 # Delete all bill history records [http://localhost/bill/history/del_all]
@@ -193,7 +212,7 @@ def delete_all_bill_history(current_user, role):
         return make_response(jsonify({'message': 'All bill history records deleted successfully'}), 200)
     except Exception as e:
         print(f"Error deleting all bill history records: {e}")
-        return make_response(jsonify({'message': 'Error deleting all bill history records', 'error': str(e)}), 500)    
+        return make_response(jsonify({'message': 'Error deleting all bill history records', 'error': str(e)}), 500)
 
 
 @app.route('/bill/history/<int:id>', methods=['GET'])
@@ -215,6 +234,11 @@ def get_bill_history_detail(current_user, role, id):
             'unit_id': bill_history.unit_id,
             'amount': bill_history.amount,
             'date_sent': str(bill_history.date_sent),  # Convert date to string
+            'roomNumber': bill_history.roomNumber,  # Include the room number
+            'residentName': bill_history.residentName,  # Include the resident name
+            'residentEmail': bill_history.residentEmail,  # Include the resident email
+            'currentNumberOfUnits': bill_history.currentNumberOfUnits,  # Include the current number of units
+            'previousNumberOfUnits': bill_history.previousNumberOfUnits  # Include the previous number of units
         }
 
         return jsonify({'BillHistoryDetail': detail_data})

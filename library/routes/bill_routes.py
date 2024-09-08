@@ -60,7 +60,12 @@ def send_bill_by_email(current_user, role, bill_id):
         new_history = BillHistory(
             unit_id=bill.unit_id,
             amount=bill.amount,
-            date_sent=date.today()
+            date_sent=bill.date_created,
+            roomNumber=bill.res_room,
+            residentName=resident.name,
+            residentEmail=resident.lineId,  # Assuming lineId is the email
+            currentNumberOfUnits=bill.unit.numberOfUnits,
+            previousNumberOfUnits=bill.unit.prevNumberOfUnits
         )
         db.session.add(new_history)
         db.session.commit()
@@ -123,7 +128,12 @@ def send_all_bills(current_user, role):
                 new_history = BillHistory(
                     unit_id=bill.unit_id,
                     amount=bill.amount,
-                    date_sent=bill.date_created
+                    date_sent=bill.date_created,
+                    roomNumber=bill.res_room,
+                    residentName=resident.name,
+                    residentEmail=resident.lineId,  # Assuming lineId is the email
+                    currentNumberOfUnits=bill.unit.numberOfUnits,
+                    previousNumberOfUnits=bill.unit.prevNumberOfUnits
                 )
                 db.session.add(new_history)
             except Exception as e:

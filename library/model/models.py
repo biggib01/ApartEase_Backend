@@ -127,11 +127,17 @@ class BillHistory(db.Model):
     unit_id = db.Column(db.Integer, db.ForeignKey('unit.id'))
     amount = db.Column(db.Float)
     date_sent = db.Column(db.Date)
+    roomNumber = db.Column(db.String)
+    residentName = db.Column(db.String)
+    residentEmail = db.Column(db.String)
+    currentNumberOfUnits = db.Column(db.String)
+    previousNumberOfUnits = db.Column(db.String)
     unit = db.relationship('Unit', backref=db.backref('bill_histories', lazy=True))
 
     @property
     def res_room(self):
-        return self.unit.res_room if self.unit else None
+        return self.roomNumber
+        # return self.unit.res_room if self.unit else None
 
 
 
