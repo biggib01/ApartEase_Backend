@@ -30,6 +30,7 @@ def create_or_update_unit():
         if existing_unit:
             # Update the existing unit record
             existing_unit.prevNumberOfUnits = existing_unit.numberOfUnits
+            existing_unit.prevImgUrl = existing_unit.imgUrl 
             existing_unit.numberOfUnits = number_of_units
             existing_unit.date = date.datetime.now()
             existing_unit.extractionStatus = extraction_status
@@ -44,6 +45,7 @@ def create_or_update_unit():
                 extractionStatus=extraction_status,
                 approveStatus=approve_status,
                 imgUrl=imgUrl,
+                prevImgUrl='',
                 res_room=res_room
             )
             db.session.add(new_unitRecord)
@@ -75,6 +77,7 @@ def get_unit(current_user, role, unit_id):
         'extractionStatus': unit_record.extractionStatus,
         'approveStatus': unit_record.approveStatus,
         'imgUrl': unit_record.imgUrl,
+        "prevImgUrl": unit_record.prevImgUrl,
         'res_room': unit_record.res_room
     }
 
@@ -151,6 +154,7 @@ def get_unit_by_room(current_user, role):
             'extractionStatus': record.extractionStatus,
             'approveStatus': record.approveStatus,
             'imgUrl': record.imgUrl,
+            "prevImgUrl": record.prevImgUrl,
             'res_room': record.res_room
         }
         output.append(record_data)
@@ -193,6 +197,7 @@ def get_units(current_user, role):
             'extractionStatus': record.extractionStatus,
             'approveStatus': record.approveStatus,
             'imgUrl': record.imgUrl,
+            'prevImgUrl': record.prevImgUrl,
             'res_room': record.res_room
         }
         output.append(record_data)
@@ -257,6 +262,7 @@ def update_unit(current_user, role, rec_id):
             if 'date' in change_data:
                 unit_record.date = change_data['date']
             if 'imgUrl' in change_data:
+                unit_record.prevImgUrl = unit_record.imgUrl
                 unit_record.imgUrl = change_data['imgUrl']
             if 'res_room' in change_data:
                 unit_record.res_room = change_data['res_room']

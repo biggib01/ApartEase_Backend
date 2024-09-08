@@ -58,6 +58,7 @@ class Unit(db.Model):
     date = db.Column(db.Date)
     extractionStatus = db.Column(db.String)
     imgUrl = db.Column(db.String)
+    prevImgUrl = db.Column(db.String)
     approveStatus = db.Column(db.Boolean)
     res_room = db.Column(db.String, db.ForeignKey('resident.roomNumber'))
 
@@ -70,6 +71,10 @@ class Unit(db.Model):
     def update_prev_units(self):
         """Update the previous month's units with the current month's units."""
         self.prevNumberOfUnits = self.numberOfUnits
+
+    def update_prev_img_url(self):
+        """Update the previous image URL with the current image URL."""
+        self.preImgUrl = self.imgUrl    
 
     def __repr__(self):
         return f'<Unit "{self.id}">'    
