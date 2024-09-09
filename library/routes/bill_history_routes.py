@@ -22,7 +22,7 @@ def add_bill_history(current_user, role):
             print(f"Received data: {record}")  # Log the received data
 
             # Check for missing required fields
-            required_fields = ['unit_id', 'amount', 'date_sent']
+            required_fields = ['roomNumber', 'amount', 'date_sent', 'residentName', 'residentEmail', 'currentNumberOfUnits', 'previousNumberOfUnits', 'unit_id']
             missing_fields = [field for field in required_fields if field not in record]
             if missing_fields:
                 return jsonify({'message': f'Missing required fields in one of the records: {", ".join(missing_fields)}'}), 400
@@ -40,7 +40,7 @@ def add_bill_history(current_user, role):
                 existing_history.amount = record['amount']
                 existing_history.roomNumber = unit.res_room
                 existing_history.residentName = resident.name if resident else None
-                existing_history.residentEmail = resident.email if resident else None
+                existing_history.residentEmail = resident.lineId if resident else None
                 existing_history.currentNumberOfUnits = unit.numberOfUnits
                 existing_history.previousNumberOfUnits = unit.prevNumberOfUnits
             else:
@@ -50,7 +50,7 @@ def add_bill_history(current_user, role):
                     date_sent=toDate(record['date_sent']),
                     roomNumber=unit.res_room,
                     residentName=resident.name if resident else None,
-                    residentEmail=resident.email if resident else None,
+                    residentEmail=resident.lineId if resident else None,
                     currentNumberOfUnits=unit.numberOfUnits,
                     previousNumberOfUnits=unit.prevNumberOfUnits
                 )
