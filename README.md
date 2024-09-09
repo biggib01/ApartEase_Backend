@@ -21,9 +21,11 @@
     > JSON body `"name:str", "lineId:str", "roomNumber:str"`
   - Delete resident by id ```('/resident/del/<res_id>', methods=['DELETE'])``` 💥 <br>
     > JSON body `none`
+
+    
 - CRUD for electric unit record database
   - Add unit record ```('/unit/add', methods=['POST'])``` ✏️ <br>
-    > JSON body `"numberOfUnits:str", "extractionStatus:str", "res_room:str"`
+    > JSON body `"numberOfUnits:str", "extractionStatus:str", "res_room:str","imgUrl:str"`
   - GET unit record list ```('/unit/list', methods=['GET'])``` 🗒️ <br>
     > JSON body `none`
   - GET unit record by id ```('/unit/list/<uid>', methods=['GET'])``` 📃 <br>
@@ -33,9 +35,33 @@
   - GET unit record by room number ```('/unit/list/room?query=<room_number>&page=<page_number>', methods=['GET'])``` 🚪 <br>
     > JSON body `none`
   - Update unit record by id ```('/unit/edit/<rec_id>', methods=['PUT'])``` ✍️ <br>
-    > JSON body `"numberOfUnits:str", "date:str", "extractionStatus:str", "approveStatus:bool", "res_room:str"`<br> Date format is `YYYY-mm-dd`
+    > JSON body `"numberOfUnits:str", , "approveStatus:boolen", "preNumberOfUnits:str"`
   - Delete unit record by id ```('/unit/del/<rec_id>', methods=['DELETE'])``` 💥 <br>
     > JSON body `none`
+    
+- CRUD for Bill
+  - Add Bill record ```('/bill/add/<unit_id>', methods=['POST'])``` ✏️ <br>
+    > JSON body `"date_create:str","amount:str"`<br> Date format is `YYYY-mm-dd`
+  - GET bill record list ```('/bill/list', methods=['GET'])``` 🗒️ <br>
+    > JSON body `none`
+  - Send bill record by id ```('/bill/send/<id>?email:<resident_email_address>', methods=['POST'])``` 💥 <br>
+    > JSON body `none`
+  - Delete bill record by id ```('/bill/del/<id>', methods=['DELETE'])``` 💥 <br>
+    > JSON body `none`
+
+
+- CRUD for Bill History
+  - Add Bill history record ```('/bill/history/add/', methods=['POST'])``` ✏️ <br>
+    > JSON body `"roomNumber:str","amount:str","date_sent:str","residentName:str","residentEmail:str","currentNumberOfUnits:str","previousNumberOfUnits:str","unit_id"`<br> Date format is `YYYY-mm-dd`
+  - GET bill history record list ```('/bill/history/list', methods=['GET'])``` 🗒️ <br>
+    > JSON body `none`
+  - GET bill history record by id ```('/bill/history/list<id>', methods=['GET'])``` 🗒️ <br>
+    > JSON body `none`
+  - Filter bill history record by date ```('/bill/history/date?page=1&start=<start_date>&end=<end_date>', methods=['GET'])``` 💥 <br>
+    > JSON body `none`
+  - Delete bill history record by id ```('/bill/history/del/<id>', methods=['DELETE'])``` 💥 <br>
+    > JSON body `none`
+        
 - CRUD for user information database
   > required "Admin" role to access
   - Add user ```('/user/add', methods=['POST'])``` ✏️ <br>
