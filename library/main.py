@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_cors import CORS
 from flask_mail import Mail
 from config import app_config
+from azblobexplorer import AzureBlobDelete
 
 config_name = os.getenv('FLASK_ENV', 'default')
 
@@ -19,6 +20,8 @@ migrate = Migrate(app, db, render_as_batch=True) # obj for db migrations
 CORS(app)
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
+
+az = AzureBlobDelete(app.config['AZURE_ACCOUNT_NAME'], app.config['AZURE_ACCOUNT_KEY'], app.config['CONTAINER_NAME'])
 
 # Ensure the upload folder exists
 if not os.path.exists(app.config['UPLOAD_FOLDER']):

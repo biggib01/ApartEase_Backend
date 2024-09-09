@@ -2,11 +2,12 @@ import json
 
 from flask import Flask, render_template, request, redirect, url_for, jsonify, make_response
 import os
-from library.main import db, app
+from library.main import db, app, az
 from azure.storage.blob import BlobServiceClient, generate_blob_sas, BlobSasPermissions
 from datetime import datetime, timedelta
 import requests
 from dotenv import load_dotenv
+from library.functions import getNameFromURL
 
 load_dotenv()
 
@@ -67,37 +68,39 @@ def upload_files():
         data = {
             'url': url_img
         }
-        # request for prediction
-        response = requests.post('http://213.180.0.67:20010/predict', headers=headers, json=data)
+        try:
+            # request for prediction
+            response = requests.post('http://213.180.0.67:20010/predict', headers=headers, json=data)
 
-        response_json = json.loads(response.json())
+            response_json = json.loads(response.json())
 
-        print(response_json)
+            # Join all classes starting from index 0 into a single number (string)
+            numberOfUnits = ''.join([str(pred['class']) for pred in response_json['predictions']])
 
-        # Join all classes starting from index 0 into a single number (string)
-        numberOfUnits = ''.join([str(pred['class']) for pred in response_json['predictions']])
+            # Get room number
+            roomNumber = response_json['room_number']
 
-        # Get room number
-        roomNumber = response_json['room_number']
+            # Check if there are any warnings
+            if response_json['warnings']:
+                extractionStatus = "Not fully successful"
+            else:
+                extractionStatus = "Fully successful"
 
-        # Check if there are any warnings
-        if response_json['warnings']:
-            extractionStatus = "Not fully successful"
-        else:
-            extractionStatus = "Fully successful"
+            create_unit = {
+                'numberOfUnits': numberOfUnits,
+                'extractionStatus': extractionStatus,
+                'res_room': roomNumber,
+                'imgUrl': url_img
+            }
 
-        # Output the results
-        print("numberOfUnits:", numberOfUnits)
-        print("extractionStatus:", extractionStatus)
-        print("res_room:", roomNumber)
+            requests.post('http://127.0.0.1:1234/unit/add', headers=headers, json=create_unit)
 
-        create_unit = {
-            'numberOfUnits': numberOfUnits,
-            'extractionStatus': extractionStatus,
-            'res_room': roomNumber,
-            'imgUrl': url_img
-        }
+        except Exception as e:
 
-        requests.post('http://127.0.0.1:1234/unit/add', headers=headers, json=create_unit)
+            filename = getNameFromURL(url_img)
+
+            az.delete_file(filename)
+
+            return make_response(jsonify({'error': 'There is some problem/error with backend.'}), 500)
 
     return make_response(jsonify({'uploaded_file_urls': uploaded_file_urls}), 200)

@@ -14,3 +14,11 @@ def pagination(page, list, per_page):
     item_on_page = list[start:end]
 
     return total_pages, item_on_page
+
+def getNameFromURL(urllink):
+
+    url = urllink
+
+    filename = url.rsplit('/', 1)[-1]
+
+    return str(filename)
