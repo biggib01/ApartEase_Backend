@@ -22,7 +22,7 @@ def add_bill_history(current_user, role):
             print(f"Received data: {record}")  # Log the received data
 
             # Check for missing required fields
-            required_fields = ['roomNumber', 'amount', 'date_sent', 'residentName', 'residentEmail', 'currentNumberOfUnits', 'previousNumberOfUnits', 'unit_id']
+            required_fields = ['amount', 'date_sent', 'unit_id', 'rent_cost', 'water_cost', 'cost_per_unit']
             missing_fields = [field for field in required_fields if field not in record]
             if missing_fields:
                 return jsonify({'message': f'Missing required fields in one of the records: {", ".join(missing_fields)}'}), 400
@@ -34,27 +34,20 @@ def add_bill_history(current_user, role):
 
             resident = Resident.query.filter_by(roomNumber=unit.res_room).first()
 
-            # Check if a bill history record already exists for the given unit_id and date_sent
-            existing_history = BillHistory.query.filter_by(unit_id=record['unit_id'], date_sent=toDate(record['date_sent'])).first()
-            if existing_history:
-                existing_history.amount = record['amount']
-                existing_history.roomNumber = unit.res_room
-                existing_history.residentName = resident.name if resident else None
-                existing_history.residentEmail = resident.lineId if resident else None
-                existing_history.currentNumberOfUnits = unit.numberOfUnits
-                existing_history.previousNumberOfUnits = unit.prevNumberOfUnits
-            else:
-                new_history = BillHistory(
-                    unit_id=record['unit_id'],
-                    amount=record['amount'],
-                    date_sent=toDate(record['date_sent']),
-                    roomNumber=unit.res_room,
-                    residentName=resident.name if resident else None,
-                    residentEmail=resident.lineId if resident else None,
-                    currentNumberOfUnits=unit.numberOfUnits,
-                    previousNumberOfUnits=unit.prevNumberOfUnits
-                )
-                db.session.add(new_history)
+            new_history = BillHistory(
+                unit_id=record['unit_id'],
+                amount=record['amount'],
+                date_sent=toDate(record['date_sent']),
+                roomNumber=unit.res_room,
+                residentName=resident.name if resident else None,
+                residentEmail=resident.lineId if resident else None,
+                currentNumberOfUnits=unit.numberOfUnits,
+                previousNumberOfUnits=unit.prevNumberOfUnits,
+                rent_cost=record['rent_cost'],
+                water_cost=record['water_cost'],
+                cost_per_unit=record['cost_per_unit']
+            )
+            db.session.add(new_history)
 
         db.session.commit()
         return jsonify({'message': 'Bill history records processed successfully!'})
@@ -223,12 +216,6 @@ def get_bill_history_detail(current_user, role, id):
         if not bill_history:
             return jsonify({'message': 'Bill history record not found'}), 404
 
-        # Fetch the resident details
-        resident = Resident.query.filter_by(roomNumber=bill_history.unit.res_room).first()
-
-        if not resident:
-            print(f"No resident found for room number: {bill_history.unit.res_room}")
-
         detail_data = {
             'id': bill_history.id,
             'unit_id': bill_history.unit_id,
@@ -238,7 +225,10 @@ def get_bill_history_detail(current_user, role, id):
             'residentName': bill_history.residentName,  # Include the resident name
             'residentEmail': bill_history.residentEmail,  # Include the resident email
             'currentNumberOfUnits': bill_history.currentNumberOfUnits,  # Include the current number of units
-            'previousNumberOfUnits': bill_history.previousNumberOfUnits  # Include the previous number of units
+            'previousNumberOfUnits': bill_history.previousNumberOfUnits,  # Include the previous number of units
+            'water_cost': bill_history.water_cost,
+            'rent_cost': bill_history.rent_cost,
+            'cost_per_unit': bill_history.cost_per_unit
         }
 
         return jsonify({'BillHistoryDetail': detail_data})

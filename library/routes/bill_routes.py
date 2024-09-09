@@ -21,6 +21,13 @@ from datetime import date
 @app.route('/bill/send/<bill_id>', methods=['POST'])
 @token_required
 def send_bill_by_email(current_user, role, bill_id):
+    data = request.json  # Get the JSON data sent in the request
+
+    # Extract the variables sent from the client
+    rent_cost = data.get('rent_cost')
+    water_cost = data.get('water_cost')
+    cost_per_unit = data.get('cost_per_unit')
+
     # Fetch the bill details
     bill = Bill.query.filter_by(id=bill_id).first()
     if not bill:
@@ -65,7 +72,10 @@ def send_bill_by_email(current_user, role, bill_id):
             residentName=resident.name,
             residentEmail=resident.lineId,  # Assuming lineId is the email
             currentNumberOfUnits=bill.unit.numberOfUnits,
-            previousNumberOfUnits=bill.unit.prevNumberOfUnits
+            previousNumberOfUnits=bill.unit.prevNumberOfUnits,
+            rent_cost=rent_cost,
+            water_cost=water_cost,
+            cost_per_unit=cost_per_unit
         )
         db.session.add(new_history)
         db.session.commit()
@@ -87,6 +97,13 @@ def send_bill_by_email(current_user, role, bill_id):
 @app.route('/bill/send_all', methods=['POST'])
 @token_required
 def send_all_bills(current_user, role):
+    data = request.json  # Get the JSON data sent in the request
+
+    # Extract the variables sent from the client
+    rent_cost = data.get('rent_cost')
+    water_cost = data.get('water_cost')
+    cost_per_unit = data.get('cost_per_unit')
+
     try:
         # Fetch all bills
         bills = Bill.query.all()
@@ -133,7 +150,10 @@ def send_all_bills(current_user, role):
                     residentName=resident.name,
                     residentEmail=resident.lineId,  # Assuming lineId is the email
                     currentNumberOfUnits=bill.unit.numberOfUnits,
-                    previousNumberOfUnits=bill.unit.prevNumberOfUnits
+                    previousNumberOfUnits=bill.unit.prevNumberOfUnits,
+                    rent_cost=rent_cost,
+                    water_cost=water_cost,
+                    cost_per_unit=cost_per_unit
                 )
                 db.session.add(new_history)
             except Exception as e:

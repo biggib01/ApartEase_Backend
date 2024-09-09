@@ -27,7 +27,15 @@ def create_or_update_unit():
         existing_unit = Unit.query.filter_by(res_room=res_room).first()
 
         if existing_unit:
-            # Update the existing unit record
+
+            # Delete the oldest image url first
+            url = existing_unit.prevImgUrl
+
+            filename = url.rsplit('/', 1)[-1]
+
+            az.delete_file(filename)
+
+            # Then update the existing unit record
             existing_unit.prevNumberOfUnits = existing_unit.numberOfUnits
             existing_unit.prevImgUrl = existing_unit.imgUrl 
             existing_unit.numberOfUnits = number_of_units

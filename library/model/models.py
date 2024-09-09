@@ -133,6 +133,9 @@ class BillHistory(db.Model):
     residentEmail = db.Column(db.String)
     currentNumberOfUnits = db.Column(db.String)
     previousNumberOfUnits = db.Column(db.String)
+    rent_cost = db.Column(db.Integer)
+    water_cost = db.Column(db.Integer)
+    cost_per_unit = db.Column(db.Integer)
     unit = db.relationship('Unit', backref=db.backref('bill_histories', lazy=True))
 
     @property
