@@ -5,6 +5,7 @@ import jwt
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from sqlalchemy.event import listen
 from sqlalchemy import text
+from werkzeug.security import generate_password_hash
 
 
 # users table
@@ -140,10 +141,6 @@ class BillHistory(db.Model):
         # return self.unit.res_room if self.unit else None
 
 
-
-
-
-
 def update_search_vector(mapper, connection, target):
     connection.execute(
         Resident.__table__.update().
@@ -173,12 +170,50 @@ def token_required(f):
     return decorator
 
 
+# Function to check if data exists, if not, create a new one
+def check_and_create_user(username):
+    # Query to check if the user already exists
+    user = Users.query.filter_by(username=username).first()
 
-# db.create_all()
+    if user:
+        print(f"User '{username}' already exists.")
+    else:
+        # If user does not exist, create a new one
+        new_user = Users(username=username, password=generate_password_hash(username, method='pbkdf2:sha256'))
+        find_role = Roles.query.filter_by(name=username).first()
+
+        if find_role:
+            new_user.roles.append(find_role)
+            db.session.add(new_user)
+            db.session.commit()
+            print(f"User '{username}' has been created.")
+        else:
+            print(f"Role '{username}' does not exists.")
+
+
+def check_and_create_role(rolename):
+    # Query to check if the role already exists
+    role = Roles.query.filter_by(name=rolename).first()
+
+    if role:
+        print(f"Role '{rolename}' already exists.")
+    else:
+        # If role does not exist, create a new one
+        new_role = Roles(name=rolename)
+        db.session.add(new_role)
+        db.session.commit()
+        print(f"Role '{rolename}' has been created.")
+
+
 # Ensure the application context is pushed before creating all tables
 with app.app_context():
     db.create_all()
 
+    check_and_create_role('admin')
+    check_and_create_role('user')
+
+    check_and_create_user('admin')
+    check_and_create_user('user')
 
 listen(Resident, 'after_insert', update_search_vector)
 listen(Resident, 'after_update', update_search_vector)

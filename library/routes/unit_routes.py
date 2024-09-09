@@ -2,10 +2,9 @@ import os
 from operator import and_
 from flask import request, jsonify, make_response
 import datetime as date
-from library.main import db, app
+from library.main import db, app, az
 from library.model.models import token_required, Unit
 from library.functions import toDate, pagination
-from azblobexplorer import AzureBlobDelete
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -56,8 +55,6 @@ def create_or_update_unit():
     except Exception as e:
         print(f"Error processing unit: {e}")
         return make_response(jsonify({'message': 'The room that record refers to does not exist!'}), 404)
-
-
 
 
 # get record list by id [http://localhost/unit/list/x]
@@ -222,19 +219,11 @@ def delete_unit(current_user, role, rec_id):
     if not unit_record:
         return make_response(jsonify({'message': 'Unit does not exist'}), 404)
 
-    accountName = os.getenv('AZURE_ACCOUNT_NAME')
-    accountKey = os.getenv('AZURE_ACCOUNT_KEY')
-    containerName = os.getenv('CONTAINER_NAME')
-
-    az = AzureBlobDelete(accountName, accountKey, containerName)
-
     url = unit_record.imgUrl
 
     filename = url.rsplit('/', 1)[-1]
-    print(filename)
 
     az.delete_file(filename)
-
 
     db.session.delete(unit_record)
     db.session.commit()
@@ -262,8 +251,9 @@ def update_unit(current_user, role, rec_id):
             if 'date' in change_data:
                 unit_record.date = change_data['date']
             if 'imgUrl' in change_data:
-                unit_record.prevImgUrl = unit_record.imgUrl
                 unit_record.imgUrl = change_data['imgUrl']
+            if 'prevImgUrl' in change_data:
+                unit_record.prevImgUrl = change_data['prevImgUrl']
             if 'res_room' in change_data:
                 unit_record.res_room = change_data['res_room']
 
