@@ -3,9 +3,10 @@ from operator import and_
 from flask import request, jsonify, make_response
 import datetime as date
 from library.main import db, app, az
-from library.model.models import token_required, Unit
+from library.model.models import token_required, Unit, Bill
 from library.functions import toDate, pagination
 from dotenv import load_dotenv
+from library.functions import getNameFromURL
 
 load_dotenv()
 
@@ -29,11 +30,10 @@ def create_or_update_unit():
         if existing_unit:
 
             # Delete the oldest image url first
-            url = existing_unit.prevImgUrl
+            if existing_unit.prevImgUrl != '':
+                filename = getNameFromURL(existing_unit.prevImgUrl)
 
-            filename = url.rsplit('/', 1)[-1]
-
-            az.delete_file(filename)
+                az.delete_file(filename)
 
             # Then update the existing unit record
             existing_unit.prevNumberOfUnits = existing_unit.numberOfUnits
@@ -226,6 +226,10 @@ def delete_unit(current_user, role, rec_id):
     unit_record = Unit.query.filter_by(id=rec_id).first()
     if not unit_record:
         return make_response(jsonify({'message': 'Unit does not exist'}), 404)
+
+    find_related_bill = Bill.query.filter_by(unit_id=rec_id).first()
+    if find_related_bill:
+        db.session.delete(find_related_bill)
 
     url = unit_record.imgUrl
 

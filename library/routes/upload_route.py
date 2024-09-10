@@ -64,6 +64,8 @@ def upload_files():
         'Content-Type': 'application/json'
     }
 
+    fileListQR = []
+
     for url_img in uploaded_file_urls:
         data = {
             'url': url_img
@@ -86,21 +88,36 @@ def upload_files():
             else:
                 extractionStatus = "Fully successful"
 
-            create_unit = {
-                'numberOfUnits': numberOfUnits,
-                'extractionStatus': extractionStatus,
-                'res_room': roomNumber,
-                'imgUrl': url_img
-            }
+            if roomNumber in [" ", "", None]:
 
-            requests.post('http://127.0.0.1:1234/unit/add', headers=headers, json=create_unit)
+                filename = getNameFromURL(url_img)
+
+                az.delete_file(filename)
+
+                fileListQR.append(filename)
+            else:
+                create_unit = {
+                    'numberOfUnits': numberOfUnits,
+                    'extractionStatus': extractionStatus,
+                    'res_room': roomNumber,
+                    'imgUrl': url_img
+                }
+
+                requests.post('http://127.0.0.1:1234/unit/add', headers=headers, json=create_unit)
 
         except Exception as e:
 
             filename = getNameFromURL(url_img)
-
             az.delete_file(filename)
 
             return make_response(jsonify({'error': 'There is some problem/error with backend.'}), 500)
+
+    data = {
+        'error': 'Bad QRcode.',
+        'list': fileListQR
+    }
+
+    if len(fileListQR) != 0:
+        return make_response(jsonify({'message': data}), 409)
 
     return make_response(jsonify({'uploaded_file_urls': uploaded_file_urls}), 200)
