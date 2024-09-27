@@ -1,5 +1,8 @@
 import os
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -13,8 +16,6 @@ class ConfigPG(object):
     SQLALCHEMY_TRACK_MODIFICATIONS = True
     SECRET_KEY = 'd9874b1c9d7d19b255c72a8096ecbd331f6885e9'
 
-
-
     # Mail configuration
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
     MAIL_PORT = int(os.environ.get('MAIL_PORT', 587))  # Use 587 for TLS
@@ -24,14 +25,13 @@ class ConfigPG(object):
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEBUG = True  # Enable debugging for Flask-Mail
 
-    AZURE_CONNECTION_STRING = os.environ.get('AZURE_CONNECTION_STRING')
-    CONTAINER_NAME = os.environ.get('CONTAINER_NAME')
+    # Azure Blob Storage configuration
     AZURE_ACCOUNT_NAME = os.environ.get('AZURE_ACCOUNT_NAME')
     AZURE_ACCOUNT_KEY = os.environ.get('AZURE_ACCOUNT_KEY')
+    CONTAINER_NAME = os.environ.get('CONTAINER_NAME')
 
     print(f"MAIL_SERVER: {MAIL_SERVER}, MAIL_PORT: {MAIL_PORT}, MAIL_USE_TLS: {MAIL_USE_TLS}, MAIL_USE_SSL: {MAIL_USE_SSL}, MAIL_USERNAME: {MAIL_USERNAME}")
-    print(f"AZURE_CONNECTION_STRING: {AZURE_CONNECTION_STRING}")
-
+    print(f"AZURE_ACCOUNT_NAME: {AZURE_ACCOUNT_NAME}, AZURE_ACCOUNT_KEY: {AZURE_ACCOUNT_KEY}, CONTAINER_NAME: {CONTAINER_NAME}")
 
 # not usable for current backend version.
 class ConfigSL(object):
@@ -44,7 +44,7 @@ class ConfigSL(object):
 class TestingConfig(ConfigSL):
     # ...
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://postgres:1234@localhost:5647/test2'
+        'postgresql://postgres:1234@localhost:5432/test'
     TESTING = True
 class StagingConfig(ConfigSL):
     # ...

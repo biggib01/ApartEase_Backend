@@ -84,7 +84,10 @@ class TestBillHistoryCRUD(unittest.TestCase):
                     new_history = BillHistory(
                         unit_id=history['unit_id'],
                         amount=history['amount'],
-                        date_sent=history['date_sent']
+                        date_sent=history['date_sent'],
+                        rent_cost=history['rent_cost'],
+                        water_cost=history['water_cost'],
+                        cost_per_unit=history['cost_per_unit']
                     )
                     db.session.add(new_history)
 
@@ -95,7 +98,10 @@ class TestBillHistoryCRUD(unittest.TestCase):
         new_history_data = json.dumps({
             "unit_id": 1,
             "amount": 1500.75,
-            "date_sent": "2024-08-14"
+            "date_sent": "2024-08-14",
+            "rent_cost": 500,
+            "water_cost": 100,
+            "cost_per_unit": 5
         })
         add_history = self.client().post('/bill/history/add', data=new_history_data, content_type="application/json", headers=headers)
         self.assertEqual(add_history.status_code, 200)
@@ -107,14 +113,27 @@ class TestBillHistoryCRUD(unittest.TestCase):
         headers = headerSetUp(self, 1, self.user_details)
         fetch_histories = self.client().get('/bill/history/list?page=1', content_type="application/json", headers=headers)
         self.assertEqual(fetch_histories.status_code, 200)
-        response = fetch_histories.data.decode()
-        self.assertIn('BillHistory', ast.literal_eval(response))
+        response = fetch_histories.get_json()  # Use get_json() instead of data.decode()
+        self.assertIn('BillHistory', response)
+        
+        # Add more specific assertions
+        self.assertIsInstance(response['BillHistory'], list)
+        self.assertTrue(len(response['BillHistory']) > 0)
+        
+        # Check the structure of the first item
+        first_item = response['BillHistory'][0]
+        expected_keys = ['id', 'unit_id', 'amount', 'date_sent', 'res_room', 'residentName', 'residentEmail', 'currentNumberOfUnits', 'previousNumberOfUnits']
+        for key in expected_keys:
+            self.assertIn(key, first_item)
 
     def test_user_logged_in_user_can_update_bill_history(self):
         headers = headerSetUp(self, 1, self.user_details)
         update_history_data = json.dumps({
             "amount": 1800.50,
-            "date_sent": "2024-08-15"
+            "date_sent": "2024-08-15",
+            "rent_cost": 550,
+            "water_cost": 120,
+            "cost_per_unit": 6
         })
         update_history = self.client().put('/bill/history/edit/1', data=update_history_data, content_type="application/json", headers=headers)
         self.assertEqual(update_history.status_code, 200)
@@ -125,7 +144,10 @@ class TestBillHistoryCRUD(unittest.TestCase):
         headers = headerSetUp(self, 1, self.user_details)
         update_history_data = json.dumps({
             "amount": 1800.50,
-            "date_sent": "2024-08-15"
+            "date_sent": "2024-08-15",
+            "rent_cost": 550,
+            "water_cost": 120,
+            "cost_per_unit": 6
         })
         update_history = self.client().put('/bill/history/edit/100', data=update_history_data, content_type="application/json", headers=headers)
         self.assertEqual(update_history.status_code, 404)
@@ -151,7 +173,10 @@ class TestBillHistoryCRUD(unittest.TestCase):
         new_history_data = json.dumps({
             "bill_id": 1,
             "amount": 1500.75,
-            "date_sent": "2024-08-14"
+            "date_sent": "2024-08-14",
+            "rent_cost": 500,
+            "water_cost": 100,
+            "cost_per_unit": 5
         })
         add_history = self.client().post('/bill/history/add', data=new_history_data, content_type="application/json", headers=headers)
         self.assertEqual(add_history.status_code, 401)
@@ -169,7 +194,10 @@ class TestBillHistoryCRUD(unittest.TestCase):
         headers = headerSetUp(self, 0, self.user_details)
         update_history_data = json.dumps({
             "amount": 1800.50,
-            "date_sent": "2024-08-15"
+            "date_sent": "2024-08-15",
+            "rent_cost": 500,
+            "water_cost": 100,
+            "cost_per_unit": 6
         })
         update_history = self.client().put('/bill/history/edit/1', data=update_history_data, content_type="application/json", headers=headers)
         self.assertEqual(update_history.status_code, 401)

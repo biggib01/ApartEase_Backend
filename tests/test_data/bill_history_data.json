@@ -2,11 +2,18 @@
     {
         "unit_id": 1,
         "amount": 1500.75,
-        "date_sent": "2024-08-14"
+        "date_sent": "2024-08-14",
+        "rent_cost": 500,
+        "water_cost": 100,
+        "cost_per_unit": 5
     },
     {
         "unit_id": 2,
         "amount": 2000.50,
-        "date_sent": "2024-09-14"
+        "date_sent": "2024-09-14",
+        "rent_cost": 600,
+        "water_cost": 150,
+        "cost_per_unit": 6
     }
 ]
+
