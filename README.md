@@ -53,9 +53,9 @@
 - CRUD for Bill History
   - Add Bill history record ```('/bill/history/add/', methods=['POST'])``` ✏️ <br>
     > JSON body `"roomNumber:str","amount:str","date_sent:str","residentName:str","residentEmail:str","currentNumberOfUnits:str","previousNumberOfUnits:str","unit_id"`<br> Date format is `YYYY-mm-dd`
-  - GET bill history record list ```('/bill/history/list', methods=['GET'])``` 🗒️ <br>
+  - GET bill history record list ```('/bill/history/list?page=1', methods=['GET'])``` 🗒️ <br>
     > JSON body `none`
-  - GET bill history record by id ```('/bill/history/list<id>', methods=['GET'])``` 🗒️ <br>
+  - GET bill history record by id ```('/bill/history/<id>', methods=['GET'])``` 🗒️ <br>
     > JSON body `none`
   - Filter bill history record by date ```('/bill/history/date?page=1&start=<start_date>&end=<end_date>', methods=['GET'])``` 💥 <br>
     > JSON body `none`
