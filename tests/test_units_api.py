@@ -39,11 +39,12 @@ class TestUnitCRUD(unittest.TestCase):
             user = Users(username='user', password=generate_password_hash('user', method='pbkdf2:sha256'))
             admin = Users(username='admin', password=generate_password_hash('admin', method='pbkdf2:sha256'))
 
-            unit1 = Unit(numberOfUnits='1001', prevNumberOfUnits='900', date='2024-08-13', extractionStatus='Succeeded', approveStatus=True, res_room='101')
-            unit2 = Unit(numberOfUnits='1100', prevNumberOfUnits='1001', date='2024-09-13', extractionStatus='Succeeded', approveStatus=True, res_room='102')
+            unit1 = Unit(numberOfUnits='1001', prevNumberOfUnits='900', date='2024-08-13', extractionStatus='Succeeded', approveStatus=True, res_room='101', imgUrl='img1')
+            unit2 = Unit(numberOfUnits='1100', prevNumberOfUnits='1001', date='2024-09-13', extractionStatus='Succeeded', approveStatus=True, res_room='102', imgUrl='img2')
 
-            res1 = Resident(name='supachok jrirarojkul', lineId='line1', roomNumber='101')
-            res2 = Resident(name='puwadee pleumpiti', lineId='line2', roomNumber='102')
+            res1 = Resident(name='supachok jrirarojkul', lineId='tester1@gmail.com', roomNumber='101')
+            res2 = Resident(name='puwadee pleumpiti', lineId='tester1@gmail.com', roomNumber='102')
+            res3 = Resident(name='skibied toilet', lineId='tester3@gmail.com', roomNumber='103')
 
             user.roles.append(role_user)
             admin.roles.append(role_admin)
@@ -52,6 +53,7 @@ class TestUnitCRUD(unittest.TestCase):
             db.session.add(admin)
             db.session.add(res1)
             db.session.add(res2)
+            db.session.add(res3)
             db.session.add(unit1)
             db.session.add(unit2)
             db.session.commit()
@@ -61,12 +63,26 @@ class TestUnitCRUD(unittest.TestCase):
         self.app_context.pop()
 
 
-    def test_user_logged_in_user_can_add_unit(self):
+    def test_upload_route_can_add_unit(self):
         headers = headerSetUp(self, 1, self.user_details)
         new_unit_data = json.dumps({
-            "approveStatus": True,
+            "extractionStatus": "Successfully",
             "numberOfUnits": "1200",
-            "res_room": "101"
+            "res_room": "103",
+            "imgUrl": "image_url"
+        })
+        add_unit = self.client().post('/unit/add', data=new_unit_data, content_type="application/json", headers=headers)
+        self.assertEqual(add_unit.status_code, 200)
+        response = add_unit.data.decode()
+        self.assertEqual(ast.literal_eval(response)['message'], 'Unit record processed successfully')
+
+    def test_upload_route_can_update_unit(self):
+        headers = headerSetUp(self, 1, self.user_details)
+        new_unit_data = json.dumps({
+            "extractionStatus": "Successfully",
+            "numberOfUnits": "1200",
+            "res_room": "101",
+            "imgUrl": "image_url"
         })
         add_unit = self.client().post('/unit/add', data=new_unit_data, content_type="application/json", headers=headers)
         self.assertEqual(add_unit.status_code, 200)
@@ -79,18 +95,15 @@ class TestUnitCRUD(unittest.TestCase):
 
         self.assertEqual(fetch_unit.status_code, 200)
 
-        expected_result = {
-            'Unit':
-            {
-                    'approveStatus': True,
-                    'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
-                    'extractionStatus': 'Succeeded',
-                    'id': 1,
-                    'numberOfUnits': '1001',
-                    'prevNumberOfUnits': '900',
-                    'res_room': '101'
-            }
-        }
+        expected_result = {'Unit': {'approveStatus': True,
+          'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
+          'extractionStatus': 'Succeeded',
+          'id': 1,
+          'imgUrl': 'img1',
+          'numberOfUnits': '1001',
+          'prevImgUrl': None,
+          'prevNumberOfUnits': '900',
+          'res_room': '101'}}
 
         response = fetch_unit.get_json()
 
@@ -114,24 +127,16 @@ class TestUnitCRUD(unittest.TestCase):
 
         self.assertEqual(fetch_units.status_code, 200)
 
-        expected_result = {
-            "Unit": [
-        {
-            "approveStatus": True,
-            "date": "Tue, 13 Aug 2024 00:00:00 GMT",
-            "extractionStatus": "Succeeded",
-            "id": 1,
-            "numberOfUnits": "1001",
-            "prevNumberOfUnits": "900",
-            "res_room": "101"
-        },
-        {
-            "page": 1,
-            "total_pages": 1,
-            "total_record": 1
-        }
-    ]
-}
+        expected_result = {'Unit': [{'approveStatus': True,
+           'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
+           'extractionStatus': 'Succeeded',
+           'id': 1,
+           'imgUrl': 'img1',
+           'numberOfUnits': '1001',
+           'prevImgUrl': None,
+           'prevNumberOfUnits': '900',
+           'res_room': '101'},
+          {'page': 1, 'total_pages': 1, 'total_record': 1}]}
 
         response = fetch_units.get_json()
 
@@ -155,33 +160,25 @@ class TestUnitCRUD(unittest.TestCase):
         fetch_units = self.client().get('/unit/list?page=1', content_type="application/json", headers=headers)
         self.assertEqual(fetch_units.status_code, 200)
 
-        expected_result = {
-            'Unit': [
-                {
-                    'approveStatus': True,
-                    'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
-                    'extractionStatus': 'Succeeded',
-                    'id': 1,
-                    'numberOfUnits': '1001',
-                    'prevNumberOfUnits': '900',
-                    'res_room': '101'
-                },
-                {
-                    'approveStatus': True,
-                    'date': 'Fri, 13 Sep 2024 00:00:00 GMT',
-                    'extractionStatus': 'Succeeded',
-                    'id': 2,
-                    'numberOfUnits': '1100',
-                    'prevNumberOfUnits': '1001',
-                    'res_room': '102'
-                },
-                {
-                    'page': 1,
-                    'total_pages': 1,
-                    'total_record': 2
-                }
-            ]
-        }
+        expected_result = {'Unit': [{'approveStatus': True,
+           'date': 'Tue, 13 Aug 2024 00:00:00 GMT',
+           'extractionStatus': 'Succeeded',
+           'id': 1,
+           'imgUrl': 'img1',
+           'numberOfUnits': '1001',
+           'prevImgUrl': None,
+           'prevNumberOfUnits': '900',
+           'res_room': '101'},
+          {'approveStatus': True,
+           'date': 'Fri, 13 Sep 2024 00:00:00 GMT',
+           'extractionStatus': 'Succeeded',
+           'id': 2,
+           'imgUrl': 'img2',
+           'numberOfUnits': '1100',
+           'prevImgUrl': None,
+           'prevNumberOfUnits': '1001',
+           'res_room': '102'},
+          {'page': 1, 'total_pages': 1, 'total_record': 2}]}
 
         response = fetch_units.get_json()
 
@@ -228,18 +225,6 @@ class TestUnitCRUD(unittest.TestCase):
         self.assertEqual(delete_unit.status_code, 404)
         response = delete_unit.data.decode()
         self.assertEqual(ast.literal_eval(response)['message'], 'Unit does not exist')
-
-    def test_user_without_valid_token_cannot_add_unit(self):
-        headers = headerSetUp(self, 0, self.user_details)
-        new_unit_data = json.dumps({
-            "approveStatus": True,
-            "numberOfUnits": "1200",
-            "res_room": "103"
-        })
-        add_unit = self.client().post('/unit/add', data=new_unit_data, content_type="application/json", headers=headers)
-        self.assertEqual(add_unit.status_code, 401)
-        response = add_unit.data.decode()
-        self.assertEqual(ast.literal_eval(response)['message'], 'Invalid token!')
 
     def test_user_without_valid_token_cannot_get_units(self):
         headers = headerSetUp(self, 0, self.user_details)

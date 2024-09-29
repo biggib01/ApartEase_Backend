@@ -56,8 +56,6 @@ def upload_files():
 
         file_url = f"https://{blob_service_client.account_name}.blob.core.windows.net/{CONTAINER_NAME}/{file.filename}"
 
-
-
         uploaded_file_urls.append(file_url)
 
     headers = {
@@ -72,7 +70,7 @@ def upload_files():
         }
         try:
             # request for prediction
-            response = requests.post('http://213.180.0.67:20010/predict', headers=headers, json=data)
+            response = requests.post('http://213.180.0.36:47915/predict', headers=headers, json=data)
 
             response_json = json.loads(response.json())
 
@@ -109,7 +107,6 @@ def upload_files():
 
             filename = getNameFromURL(url_img)
             az.delete_file(filename)
-
             return make_response(jsonify({'error': 'There is some problem/error with backend.'}), 500)
 
     data = {

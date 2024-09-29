@@ -42,7 +42,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
             db.session.add(admin)
 
             # Load unit data from JSON file
-            with open('tests/test_data/unit_data.json') as f:
+            with open('test_data/unit_data.json') as f:
                 unit_data = json.load(f)
                 for unit in unit_data:
                     new_unit = Unit(
@@ -56,7 +56,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
                     db.session.add(new_unit)
 
             # Load resident data from JSON file
-            with open('tests/test_data/resident_data.json') as f:
+            with open('test_data/resident_data.json') as f:
                 resident_data = json.load(f)
                 for resident in resident_data:
                     new_resident = Resident(
@@ -67,7 +67,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
                     db.session.add(new_resident)
 
             # Load bill data from JSON file
-            with open('tests/test_data/bill_data.json') as f:
+            with open('test_data/bill_data.json') as f:
                 bill_data = json.load(f)
                 for bill in bill_data:
                     new_bill = Bill(
@@ -78,7 +78,7 @@ class TestBillHistoryCRUD(unittest.TestCase):
                     db.session.add(new_bill)
 
             # Load bill history data from JSON file
-            with open('tests/test_data/bill_history_data.json') as f:
+            with open('test_data/bill_history_data.json') as f:
                 bill_history_data = json.load(f)
                 for history in bill_history_data:
                     new_history = BillHistory(

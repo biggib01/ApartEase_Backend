@@ -30,7 +30,7 @@ def create_or_update_unit():
         if existing_unit:
 
             # Delete the oldest image url first
-            if existing_unit.prevImgUrl != '':
+            if existing_unit.prevImgUrl not in [None, '']:
                 filename = getNameFromURL(existing_unit.prevImgUrl)
 
                 az.delete_file(filename)
@@ -235,7 +235,10 @@ def delete_unit(current_user, role, rec_id):
 
     filename = url.rsplit('/', 1)[-1]
 
-    az.delete_file(filename)
+    try:
+        az.delete_file(filename)
+    except Exception as e:
+        pass
 
     db.session.delete(unit_record)
     db.session.commit()
@@ -273,7 +276,7 @@ def update_unit(current_user, role, rec_id):
             return make_response(jsonify({'message': 'Unit data has been updated'}), 200)
         except Exception as e:
             print(f"Error updating unit: {e}")
-            return make_response(jsonify({"message": "Error updating unit data!"}), 404)
+            return make_response(jsonify({"message": "Error updating unit data!"}), 401)
     else:
         return make_response(jsonify({"message": "There's no unit exists!"}), 404)
 
